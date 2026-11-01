@@ -8,7 +8,7 @@ import hmac
 import json
 import logging
 import time
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from typing import Annotated, Any
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, WebSocket
@@ -38,7 +38,9 @@ def create_app(
     frame_source_factory: FrameSourceFactory | None = None,
 ) -> FastAPI:
     settings = settings or Settings.from_env()
-    providers = providers or provider_registry.make_all(provider_registry.load_config(settings.providers_path))
+    providers = providers or provider_registry.make_all(
+        provider_registry.load_config(settings.providers_path)
+    )
     store = store or MemoryStore(settings.db_path, providers.embedder, retention_s=settings.retention_s)
     packs = PackRegistry([settings.packs_dir] if settings.packs_dir else None)
     metrics = Metrics()
@@ -64,7 +66,7 @@ def create_app(
                 log.exception("retention job failed")
 
     @contextlib.asynccontextmanager
-    async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    async def lifespan(_: FastAPI) -> AsyncGenerator[None]:
         task = asyncio.create_task(retention_loop())
         try:
             yield
@@ -90,12 +92,16 @@ def create_app(
 
     @app.exception_handler(HTTPException)
     async def _http_err(_: Request, exc: HTTPException) -> JSONResponse:
-        code = {400: "bad_request", 401: "unauthorized", 404: "not_found", 429: "quota"}.get(exc.status_code, "internal")
+        code = {400: "bad_request", 401: "unauthorized", 404: "not_found", 429: "quota"}.get(
+            exc.status_code, "internal"
+        )
         return JSONResponse({"code": code, "message": str(exc.detail)}, status_code=exc.status_code)
 
     @app.exception_handler(RequestValidationError)
     async def _val_err(_: Request, exc: RequestValidationError) -> JSONResponse:
-        return JSONResponse({"code": "bad_request", "message": f"{len(exc.errors())} invalid parameter(s)"}, 400)
+        return JSONResponse(
+            {"code": "bad_request", "message": f"{len(exc.errors())} invalid parameter(s)"}, 400
+        )
 
     @app.get("/healthz")
     async def healthz() -> dict[str, str]:
@@ -114,7 +120,9 @@ def create_app(
             ScenarioInfo(
                 name=p.name,
                 description=p.description,
-                event_types=[ScenarioEventType(type=t.type, description=t.description) for t in p.event_types.values()],
+                event_types=[
+                    ScenarioEventType(type=t.type, description=t.description) for t in p.event_types.values()
+                ],
                 tools=[*core, *p.tool_names()],
             ).wire()
             for p in packs.all()
@@ -122,7 +130,6 @@ def create_app(
 
     @app.get("/v1/history", dependencies=[Depends(require_token)])
     async def history(  # since_ms/until_ms: wall-clock epoch ms
-
         since_ms: Annotated[int, Query(ge=0)],
         until_ms: Annotated[int, Query(ge=0)],
         stream_id: Annotated[str | None, Query(max_length=64)] = None,
@@ -142,7 +149,11 @@ def create_app(
 
     @app.websocket("/internal/sessions/{session_id}/ws")
     async def session_ws(ws: WebSocket, session_id: str) -> None:
-        if not token_ok(ws.headers.get("x-internal-token"), ws.query_params.get("token")) or session_id in sessions or len(session_id) > 64:
+        if (
+            not token_ok(ws.headers.get("x-internal-token"), ws.query_params.get("token"))
+            or session_id in sessions
+            or len(session_id) > 64
+        ):
             await ws.close(code=1008)
             return
         await ws.accept()
@@ -165,12 +176,13 @@ def create_app(
                     break
                 text = m.get("text")
                 if text is None:
-                    await session.emit(ErrorMessage(code="bad_request", message="binary messages not accepted"))
+                    await session.emit(
+                        ErrorMessage(code="bad_request", message="binary messages not accepted")
+                    )
                     continue
                 if len(text.encode()) > MAX_WS_TEXT:
                     await session.emit(ErrorMessage(code="bad_request", message="message too large"))
-                    await ws.close(code=1009)
-                    break
+                    break  # finally: session.close() flushes the error, then the pump closes the socket
                 await session.handle(text)
         finally:
             await session.close()

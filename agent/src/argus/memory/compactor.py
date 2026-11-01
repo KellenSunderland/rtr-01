@@ -52,6 +52,8 @@ class Compactor:
         events = self.store.events_by_ts(stream_id, 0, max(cutoff, 0))
         by_minute: dict[int, list[SceneEvent]] = {}
         for e in events:
+            if e.type == "state.snapshot":  # derived; not narrative
+                continue
             by_minute.setdefault(e.ts_ms - e.ts_ms % MINUTE_MS, []).append(e)
         made: list[MinuteSummary] = []
         for m in sorted(by_minute):
@@ -59,7 +61,11 @@ class Compactor:
                 continue
             evs = by_minute[m]
             text = await self._summarize(evs)
-            keep = [f"{e.type}@{e.ts_ms // 1000}s: {sanitize_summary(e.summary)}" for e in evs if self.high_severity(e)]
+            keep = [
+                f"{e.type}@{e.ts_ms // 1000}s: {sanitize_summary(e.summary)}"
+                for e in evs
+                if self.high_severity(e)
+            ]
             if keep:
                 text = f"{text} Key events: " + " | ".join(keep)
             s = MinuteSummary(

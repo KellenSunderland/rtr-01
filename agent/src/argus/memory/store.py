@@ -76,7 +76,9 @@ class MemoryStore:
                     f"{self.embedder.name!r} has dim {dim}; delete/rebuild the DB"
                 )
             for t in ("events_vec", "summaries_vec"):
-                self.db.execute(f"CREATE VIRTUAL TABLE IF NOT EXISTS {t} USING vec0(embedding float[{int(dim)}])")
+                self.db.execute(
+                    f"CREATE VIRTUAL TABLE IF NOT EXISTS {t} USING vec0(embedding float[{int(dim)}])"
+                )
 
     def _meta(self, key: str) -> str | None:
         r = self.db.execute("SELECT value FROM meta WHERE key=?", (key,)).fetchone()
@@ -213,7 +215,8 @@ class MemoryStore:
     def recent_events(self, stream_id: str, n: int = 5) -> list[SceneEvent]:
         with self._lock:
             rows = self.db.execute(
-                "SELECT * FROM events WHERE stream_id=? ORDER BY ts_ms DESC, rowid DESC LIMIT ?", (stream_id, n)
+                "SELECT * FROM events WHERE stream_id=? ORDER BY ts_ms DESC, rowid DESC LIMIT ?",
+                (stream_id, n),
             ).fetchall()
         return [self._row_event(r) for r in reversed(rows)]
 
@@ -359,4 +362,3 @@ class MemoryStore:
                 t: int(self.db.execute(f"SELECT count(*) FROM {t}").fetchone()[0])  # noqa: S608
                 for t in ("events", "events_vec", "minute_summaries", "summaries_vec")
             }
-

@@ -117,7 +117,9 @@ class PerceptionWorker:
         self._buf: deque[Frame] = deque(maxlen=self.batch * buffer_batches)
         self._wake = asyncio.Event()
         self._closed = False
-        self.flush_after_s = flush_after_s if flush_after_s is not None else pack.sampling.max_interval_ms * 2 / 1000
+        self.flush_after_s = (
+            flush_after_s if flush_after_s is not None else pack.sampling.max_interval_ms * 2 / 1000
+        )
         self.events_emitted = 0
         self._idle = asyncio.Event()
         self._idle.set()

@@ -50,6 +50,7 @@ compaction:
 ```python
 from argus.scenarios.base import ScenarioState
 
+
 class State(ScenarioState):
     """Pure reducer: apply(event) -> None; snapshot() -> dict. Must be deterministic."""
 ```
@@ -62,6 +63,7 @@ and to the console scoreboard.
 
 ```python
 from argus.scenarios.base import ScenarioTool
+
 TOOLS = [ScenarioTool(name="current_score", description=..., input_schema={...}, handler=async_fn)]
 ```
 

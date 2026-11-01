@@ -142,9 +142,11 @@ async def run_demo(
     res.sanitized = sanitizer.removed
     out("-- transcript")
     for role, text in res.transcript:
-        out(f"  {role}: {text}")
+        out(f"  {role}: " + text.replace("\n", " / ")[:220])
     if res.state:
-        out(f"-- final state: {json.dumps({k: v for k, v in res.state.items() if k in ('game', 'score', 'games_won', 'serving_team')})}")
+        out(
+            f"-- final state: {json.dumps({k: v for k, v in res.state.items() if k in ('game', 'score', 'games_won', 'serving_team')})}"
+        )
     audio = sum(1 for m in res.messages if m["type"] == "assistant.audio")
     out(f"-- {len(res.messages)} messages out, {audio} assistant.audio chunks")
     store.close()
@@ -155,4 +157,3 @@ def make_all_cfg() -> dict[str, dict[str, Any]]:
     from argus.providers.registry import load_config
 
     return load_config(None)
-

@@ -51,9 +51,7 @@ class ToolContext:
     ) -> tuple[list[SceneEvent], list[MinuteSummary]]:
         if self.memory is None:
             return [], []
-        r = await self.memory.search(
-            stream_id, since_ms=since_ms, until_ms=until_ms, text=text, limit=limit
-        )
+        r = await self.memory.search(stream_id, since_ms=since_ms, until_ms=until_ms, text=text, limit=limit)
         return r.events, r.summaries
 
 

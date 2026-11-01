@@ -270,9 +270,7 @@ class FakeASR:
                 target = min(len(words) - 1, max(1, speech * 10 // sample_rate)) if len(words) > 1 else 0
                 if target > shown:
                     shown = target
-                    yield Transcript(
-                        " ".join(words[:shown]), False, 0, int(total * 1000 // sample_rate), 0.5
-                    )
+                    yield Transcript(" ".join(words[:shown]), False, 0, int(total * 1000 // sample_rate), 0.5)
         if words is not None:
             yield Transcript(" ".join(words), True, 0, int(total * 1000 // sample_rate), 0.95)
 

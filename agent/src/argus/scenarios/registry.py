@@ -125,7 +125,9 @@ def load_pack(path: str | Path) -> Pack:
         for k, v in attrs.items():
             if v not in ATTR_TYPES:
                 raise PackError(f"{t}: attr {k!r} has type {v!r}; expected one of {sorted(ATTR_TYPES)}")
-        types[t] = EventTypeSpec(t, str(et.get("description", "")), {str(k): str(v) for k, v in attrs.items()})
+        types[t] = EventTypeSpec(
+            t, str(et.get("description", "")), {str(k): str(v) for k, v in attrs.items()}
+        )
 
     severity = raw.get("severity") or {}
     if not isinstance(severity, dict):
@@ -143,11 +145,17 @@ def load_pack(path: str | Path) -> Pack:
     s = raw.get("sampling") or {}
     try:
         sampling = Sampling(
-            float(s.get("min_motion", 0.02)), int(s.get("max_interval_ms", 5000)), int(s.get("batch_frames", 3))
+            float(s.get("min_motion", 0.02)),
+            int(s.get("max_interval_ms", 5000)),
+            int(s.get("batch_frames", 3)),
         )
     except (TypeError, ValueError) as e:
         raise PackError(f"invalid sampling: {e}") from e
-    if not (0 <= sampling.min_motion <= 1) or sampling.max_interval_ms < 1 or not (1 <= sampling.batch_frames <= 16):
+    if (
+        not (0 <= sampling.min_motion <= 1)
+        or sampling.max_interval_ms < 1
+        or not (1 <= sampling.batch_frames <= 16)
+    ):
         raise PackError("sampling out of range (min_motion 0..1, max_interval_ms>=1, batch_frames 1..16)")
     comp = raw.get("compaction") or {}
     minute_prompt = str(comp.get("minute_summary_prompt") or "Summarize these events in one sentence.")

@@ -16,9 +16,9 @@ import contextlib
 import json
 import logging
 import time
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncGenerator, AsyncIterator, Callable
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Literal, cast
 
 from pydantic import ValidationError
 
@@ -52,6 +52,7 @@ from argus.protocol import (
     client_message_adapter,
 )
 from argus.providers.base import (
+    ChatEvent,
     ChatMessage,
     ChatOptions,
     Done,
@@ -187,13 +188,18 @@ class Session:
         self.state = pack.new_state()
         self.stream_ids = list(dict.fromkeys(msg.stream_ids))
         self.deps.store.open_session(self.id, pack.name, self.clock.start_wall_ms)
-        self._compactor = Compactor(self.deps.store, self.deps.providers.chat, pack, wall_fn=self.clock.now_wall_ms)
+        self._compactor = Compactor(
+            self.deps.store, self.deps.providers.chat, pack, wall_fn=self.clock.now_wall_ms
+        )
         self.deps.metrics.inc("argus_sessions_total", scenario=pack.name)
         streams = [StreamInfo(id=s, name=s, uri="", state="starting") for s in self.stream_ids]
         self._stream_state = {s.id: s for s in streams}
         await self.emit(
             SessionStarted(
-                session_id=self.id, scenario=pack.name, streams=streams, server_wall_ms=self.clock.now_wall_ms()
+                session_id=self.id,
+                scenario=pack.name,
+                streams=streams,
+                server_wall_ms=self.clock.now_wall_ms(),
             )
         )
         for sid in self.stream_ids:
@@ -213,7 +219,7 @@ class Session:
             state=self.state,
             metrics=d.metrics,
             sanitizer=d.sanitizer,
-            on_frame=lambda f: self.latest_frames.__setitem__(f.meta.stream_id, f),
+            on_frame=self._on_frame,
             flush_after_s=1.0,
         )
         self.workers[stream_id] = w
@@ -232,7 +238,9 @@ class Session:
         failures = 0
         while not self.closed:
             try:
-                async for f in gateway_frames(d.gateway_url, stream_id, pack, self.clock, token=d.internal_token):
+                async for f in gateway_frames(
+                    d.gateway_url, stream_id, pack, self.clock, token=d.internal_token
+                ):
                     if failures:
                         await self._stream_status(stream_id, "live")
                     failures = 0
@@ -254,6 +262,10 @@ class Session:
         info = info.model_copy(update={"state": state})
         self._stream_state[stream_id] = info
         await self.emit(StreamStatus(stream=info))
+
+    def _on_frame(self, f: Frame) -> None:
+        self.latest_frames[f.meta.stream_id] = f
+        self.clock.observe(f.meta.ts_ms)
 
     async def _on_event(self, ev: SceneEvent) -> None:
         await self.emit(EventMessage(event=ev))
@@ -345,7 +357,7 @@ class Session:
             u.task = asyncio.create_task(self._run_turn(u, text))
             self.deps.metrics.inc("argus_utterances_total")
 
-    async def _cancel_active(self, reason: str) -> bool:
+    async def _cancel_active(self, reason: Literal["barge_in", "stop", "error"]) -> bool:
         u = self._active
         if u is None:
             return False
@@ -359,7 +371,7 @@ class Session:
         if partial:
             self._history.append(ChatMessage(role="assistant", content=partial + " [interrupted]"))
         self.deps.metrics.inc("argus_barge_in_total", reason=reason)
-        await self.emit(AssistantCancelled(utterance_id=u.id, reason=reason))  # type: ignore[arg-type]
+        await self.emit(AssistantCancelled(utterance_id=u.id, reason=reason))
         return True
 
     def _system_prompt(self) -> str:
@@ -396,7 +408,12 @@ class Session:
             calls: list[ToolCall] = []
             round_text: list[str] = []
             async with contextlib.aclosing(
-                self.deps.providers.chat.complete(messages, tools=specs, options=ChatOptions(max_tokens=512))
+                cast(
+                    AsyncGenerator[ChatEvent],
+                    self.deps.providers.chat.complete(
+                        messages, tools=specs, options=ChatOptions(max_tokens=512)
+                    ),
+                )
             ) as stream:
                 async for ev in stream:
                     if isinstance(ev, TextDelta):
@@ -410,7 +427,9 @@ class Session:
                         break
             if not calls:
                 return
-            messages.append(ChatMessage(role="assistant", content="".join(round_text), tool_calls=tuple(calls)))
+            messages.append(
+                ChatMessage(role="assistant", content="".join(round_text), tool_calls=tuple(calls))
+            )
             for c in calls:
                 messages.append(ChatMessage(role="tool", tool_result=await self._run_tool(c)))
         log.warning("tool round limit reached")
@@ -422,7 +441,7 @@ class Session:
         seq = 0
         samples = 0
         u.play_start = time.monotonic()
-        async with contextlib.aclosing(tts.synthesize(text)) as stream:
+        async with contextlib.aclosing(cast(AsyncGenerator[bytes], tts.synthesize(text))) as stream:
             async for chunk in stream:
                 samples += len(chunk) // 2
                 u.play_until = u.play_start + samples / tts.sample_rate
@@ -431,7 +450,7 @@ class Session:
                         utterance_id=u.id,
                         seq=seq,
                         ts_ms=self.clock.now_ts_ms(),
-                        sample_rate=tts.sample_rate,  # type: ignore[arg-type]
+                        sample_rate=cast(Any, tts.sample_rate),
                         pcm16_b64=base64.b64encode(chunk).decode("ascii"),
                     )
                 )
@@ -524,7 +543,10 @@ class Session:
             return "\n".join(lines) or "Nothing notable is visible right now."
         for t in self.pack.tools:
             if t.name == call.name:
-                ctx = ToolContext(self.id, self.pack.name, self.stream_ids, self.state, store, self.clock.now_ts_ms)  # type: ignore[arg-type]
+                assert self.state is not None
+                ctx = ToolContext(
+                    self.id, self.pack.name, self.stream_ids, self.state, store, self.clock.now_ts_ms
+                )
                 out = await t.handler(ctx, **a)
                 return out if isinstance(out, str) else json.dumps(out)
         raise ValueError(f"unknown tool {call.name!r}" + (" (core)" if call.name in CORE_TOOL_NAMES else ""))
@@ -538,7 +560,9 @@ class Session:
             q.stream_id, since_ms=q.since_ms, until_ms=q.until_ms, text=q.text, limit=q.limit
         )
         await self.emit(
-            HistoryResult(request_id=q.request_id, events=r.events, summaries=r.summaries, truncated=r.truncated)
+            HistoryResult(
+                request_id=q.request_id, events=r.events, summaries=r.summaries, truncated=r.truncated
+            )
         )
 
     # ------------------------------------------------- maintenance/stop
@@ -547,7 +571,9 @@ class Session:
             return []
         made: list[MinuteSummary] = []
         for sid in self.stream_ids:
-            made += await self._compactor.compact_stream(sid, self.clock.now_ts_ms(), include_open_minute=final)
+            made += await self._compactor.compact_stream(
+                sid, self.clock.now_ts_ms(), include_open_minute=final
+            )
         for s in made:
             await self.emit(SummaryMessage(summary=s))
         await self.deps.store.embed_pending()
@@ -583,5 +609,3 @@ class Session:
                 self.deps.store.close_session(self.id, self.clock.now_wall_ms())
         self._vad.close()
         await self.outbox.put(None)
-
-

@@ -27,9 +27,13 @@ def _is_loopback(host: str) -> bool:
 
 @app.command()
 def serve(
-    host: Annotated[str, typer.Option(help="Bind address (internal endpoints: keep on localhost).")] = "127.0.0.1",
+    host: Annotated[
+        str, typer.Option(help="Bind address (internal endpoints: keep on localhost).")
+    ] = "127.0.0.1",
     port: int = 8090,
-    providers: Annotated[Path | None, typer.Option(help="providers.yaml path (default: env ARGUS_PROVIDERS)")] = None,
+    providers: Annotated[
+        Path | None, typer.Option(help="providers.yaml path (default: env ARGUS_PROVIDERS)")
+    ] = None,
     db: Annotated[str | None, typer.Option(help="memory.db path (default: env ARGUS_DB)")] = None,
 ) -> None:
     """Run the agent (internal session WS + /v1/scenarios + /v1/history + /metrics)."""
@@ -55,7 +59,9 @@ def packs_list() -> None:
 
     reg = PackRegistry()
     for p in reg.all():
-        typer.echo(f"{p.name}\tv{p.version}\t{len(p.event_types)} event types\ttools={','.join(p.tool_names()) or '-'}\t{p.description}")
+        typer.echo(
+            f"{p.name}\tv{p.version}\t{len(p.event_types)} event types\ttools={','.join(p.tool_names()) or '-'}\t{p.description}"
+        )
     for name, err in reg.errors.items():
         typer.echo(f"{name}\tINVALID\t{err}", err=True)
 
