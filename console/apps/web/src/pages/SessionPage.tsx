@@ -16,8 +16,10 @@ export function SessionPage() {
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [text, setText] = useState("");
   const [seekTs, setSeekTs] = useState<number | null>(null);
-  const [nowMs, setNowMs] = useState(0);
-  useInterval(() => setNowMs(sess.clock.ms()), 1000);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  useInterval(() => setNowMs(Date.now()), 1000);
+  // wall-clock time at session-clock zero (approximate); frames are addressed by session-clock ts_ms
+  const wallOffset = () => Date.now() - sess.clock.ms();
 
   useEffect(() => {
     api

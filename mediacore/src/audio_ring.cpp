@@ -7,7 +7,7 @@
 namespace mediacore {
 
 AudioRing::AudioRing(int32_t sample_rate, int32_t channels, size_t capacity_frames)
-    : rate_(sample_rate), channels_(0), capacity_(capacity_frames) {
+    : channels_(0), capacity_(capacity_frames) {
   if (sample_rate <= 0 || channels <= 0 || channels > 64 || capacity_frames == 0)
     fail(MC_ERR_INVALID_ARG, "invalid audio ring parameters");
   channels_ = static_cast<size_t>(channels);

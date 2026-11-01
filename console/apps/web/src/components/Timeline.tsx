@@ -3,7 +3,6 @@ import type { MinuteSummary, SceneEvent } from "@argus/protocol";
 import {
   bucketByMinute,
   filterByType,
-  formatClock,
   fromFraction,
   inWindow,
   lastHour,
@@ -11,6 +10,9 @@ import {
   MAX_EVENTS,
 } from "../lib/timeline";
 
+const formatWall = (ms: number) => new Date(ms).toLocaleTimeString();
+
+/** All times here are wall-clock epoch ms (nowMs, seekTs, onSeek). */
 interface Props {
   events: SceneEvent[];
   summaries: MinuteSummary[];
@@ -27,7 +29,15 @@ export function Timeline({ events, summaries, nowMs, seekTs, onSeek }: Props) {
 
   const allTypes = useMemo(() => [...new Set(events.map((e) => e.type))].sort(), [events]);
   const filtered = useMemo(() => filterByType(events, types), [events, types]);
-  const buckets = useMemo(() => bucketByMinute(filtered, w, summaries), [filtered, w, summaries]);
+  const buckets = useMemo(
+    () =>
+      bucketByMinute(
+        filtered.map((e) => ({ ts_ms: e.wall_ms, type: e.type })),
+        w,
+        summaries.map((x) => ({ ...x, minute_start_ms: Math.floor(x.wall_ms / 60000) * 60000 })),
+      ),
+    [filtered, w, summaries],
+  );
   const max = Math.max(1, ...buckets.map((b) => b.count));
 
   const tsAt = (clientX: number): number | null => {
@@ -41,13 +51,16 @@ export function Timeline({ events, summaries, nowMs, seekTs, onSeek }: Props) {
     const tol = span * 0.01;
     let best: SceneEvent | null = null;
     for (const e of filtered) {
-      if (!inWindow(e.ts_ms, w)) continue;
-      if (Math.abs(e.ts_ms - ts) <= tol && (!best || Math.abs(e.ts_ms - ts) < Math.abs(best.ts_ms - ts)))
+      if (!inWindow(e.wall_ms, w)) continue;
+      if (
+        Math.abs(e.wall_ms - ts) <= tol &&
+        (!best || Math.abs(e.wall_ms - ts) < Math.abs(best.wall_ms - ts))
+      )
         best = e;
     }
-    if (best) return `${formatClock(best.ts_ms)} ${best.type}: ${best.summary}`;
-    const sum = summaries.find((s) => Math.floor(s.minute_start_ms / 60000) === Math.floor(ts / 60000));
-    return sum ? `${formatClock(sum.minute_start_ms)} summary: ${sum.text}` : formatClock(ts);
+    if (best) return `${formatWall(best.wall_ms)} ${best.type}: ${best.summary}`;
+    const sum = summaries.find((s) => Math.floor(s.wall_ms / 60000) === Math.floor(ts / 60000));
+    return sum ? `${formatWall(sum.wall_ms)} summary: ${sum.text}` : formatWall(ts);
   };
 
   return (
@@ -121,8 +134,8 @@ export function Timeline({ events, summaries, nowMs, seekTs, onSeek }: Props) {
         )}
       </div>
       <div className="axis muted small">
-        <span>{formatClock(w.startMs)}</span>
-        <span>{formatClock(w.endMs)}</span>
+        <span>{formatWall(w.startMs)}</span>
+        <span>{formatWall(w.endMs)}</span>
       </div>
     </section>
   );

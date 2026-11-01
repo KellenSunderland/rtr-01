@@ -44,6 +44,11 @@ func TestMiddleware(t *testing.T) {
 	if w.Code != 200 {
 		t.Error("query token fallback")
 	}
+	w = httptest.NewRecorder()
+	h.ServeHTTP(w, httptest.NewRequest("GET", "/?token=token-aaaaaaaa", nil))
+	if w.Code != 200 {
+		t.Error("?token= fallback")
+	}
 }
 
 func TestQuota(t *testing.T) {
@@ -77,12 +82,17 @@ func TestInternal(t *testing.T) {
 		{"127.0.0.1:5000", "wrong", 401},
 		{"127.0.0.1:5000", "", 401},
 		{"10.0.0.5:5000", "internal-secret", 403},
+		{"127.0.0.1:5000", "QUERY", 200},
 		{"garbage", "internal-secret", 403},
 	}
 	for _, c := range cases {
 		r := httptest.NewRequest("GET", "/", nil)
 		r.RemoteAddr = c.addr
-		r.Header.Set("X-Internal-Token", c.tok)
+		if c.tok == "QUERY" {
+			r.URL.RawQuery = "token=internal-secret"
+		} else {
+			r.Header.Set("X-Internal-Token", c.tok)
+		}
 		w := httptest.NewRecorder()
 		h.ServeHTTP(w, r)
 		if w.Code != c.want {

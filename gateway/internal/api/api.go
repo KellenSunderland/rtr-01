@@ -515,7 +515,10 @@ func (s *Server) proxy(w http.ResponseWriter, r *http.Request, path string) {
 	}
 	target := *base
 	target.Path = path
-	target.RawQuery = r.URL.RawQuery // the caller's query, verbatim
+	qs := r.URL.Query() // the caller's query, minus our own credentials
+	qs.Del("token")
+	qs.Del("access_token")
+	target.RawQuery = qs.Encode()
 	req, err := http.NewRequestWithContext(r.Context(), http.MethodGet, target.String(), nil)
 	if err != nil {
 		auth.WriteError(w, 500, protocol.CodeInternal, "internal error")

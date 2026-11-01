@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { SceneEvent } from "@argus/protocol";
-import { applyScoreEvent, emptyScoreboard, latestSnapshot, reduceScoreboard } from "./scoreboard";
+import {
+  parseSnapshotScore,
+  applyScoreEvent,
+  emptyScoreboard,
+  latestSnapshot,
+  reduceScoreboard,
+} from "./scoreboard";
 
 let n = 0;
 const ev = (type: string, ts_ms: number, attrs: Record<string, unknown> = {}): SceneEvent => ({
@@ -27,16 +33,16 @@ describe("scoreboard", () => {
       ev("point.won", 12, { team: "a" }),
       ev("ball.bounce", 11),
     ]);
-    expect(sb.scores).toEqual({ a: 2, b: 1 });
+    expect(sb.scores).toEqual({ A: 2, B: 1 });
     expect(sb.rallies).toBe(3);
     expect(sb.rallyActive).toBe(false);
-    expect(sb.lastWinner).toBe("a");
+    expect(sb.lastWinner).toBe("A");
     expect(sb.lastPointTs).toBe(12);
   });
   it("orders by ts and dedupes by id", () => {
     const p = ev("point.won", 5, { team: "a" });
     const sb = reduceScoreboard([ev("rally.start", 9), p, p]);
-    expect(sb.scores).toEqual({ a: 1 });
+    expect(sb.scores).toEqual({ A: 1 });
     expect(sb.rallyActive).toBe(true); // rally.start (ts 9) after the point (ts 5)
   });
   it("unknown winner and ignored types", () => {
@@ -47,5 +53,17 @@ describe("scoreboard", () => {
     expect(latestSnapshot([])).toBeNull();
     const s = latestSnapshot([ev("state.snapshot", 1, { a: 1 }), ev("state.snapshot", 7, { a: 2 })]);
     expect(s).toEqual({ ts_ms: 7, state: { a: 2 } });
+  });
+  it("parses snapshot score", () => {
+    expect(
+      parseSnapshotScore({
+        score: { A: 3, B: 1 },
+        serving_team: "A",
+        server_number: 2,
+        game: 1,
+        side_switched: false,
+      }),
+    ).toMatchObject({ score: { A: 3, B: 1 }, serving_team: "A", server_number: 2 });
+    expect(parseSnapshotScore({ x: 1 })).toBeNull();
   });
 });

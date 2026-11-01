@@ -8,9 +8,12 @@ info:
     sessions, auth/quotas, and clip export; it proxies conversation and history to the
     agent service (see /internal and host/CONTRACTS.md).
 
-    Auth: `Authorization: Bearer <token>`. Tokens and their quotas come from the
+    Auth: `Authorization: Bearer <token>`; WebSocket endpoints also accept `?token=<token>`
+    (browsers cannot set headers on WS handshakes). Tokens and their quotas come from the
     gateway config file. Every error body is `{ "code": string, "message": string }`
     with codes matching protocol `ErrorMessage.code`.
+    Time domains: `ts_ms` = per-session monotonic clock; history queries use WALL-CLOCK epoch ms
+    (`since_ms`/`until_ms` on `/v1/history` and `history.query` are wall ms).
 servers:
   - url: http://localhost:8080
 paths:
@@ -98,7 +101,7 @@ paths:
         - { name: until_ms, in: query, required: true, schema: { type: integer } }
         - { name: q, in: query, schema: { type: string, maxLength: 500 } }
         - { name: limit, in: query, schema: { type: integer, default: 50, maximum: 200 } }
-      responses: { "200": { description: ok, content: { application/json: { schema: { $ref: "#/components/schemas/HistoryResult" } } } } }
+      responses: { "200": { description: ok, content: { application/json: { schema: { $ref: "#/components/schemas/HistoryPage" } } } } }
   /v1/scenarios:
     get:
       summary: Scenario packs available on the agent
@@ -134,7 +137,13 @@ components:
     CreateStreamRequest: { $ref: "../../console/packages/protocol/schema.json#/CreateStreamRequest" }
     CreateSessionRequest: { $ref: "../../console/packages/protocol/schema.json#/CreateSessionRequest" }
     SessionInfo: { $ref: "../../console/packages/protocol/schema.json#/SessionInfo" }
-    HistoryResult: { $ref: "../../console/packages/protocol/schema.json#/HistoryResult" }
+    HistoryPage:
+      type: object
+      required: [events, summaries, truncated]
+      properties:
+        events: { type: array, items: { $ref: "../../console/packages/protocol/schema.json#/SceneEvent" } }
+        summaries: { type: array, items: { $ref: "../../console/packages/protocol/schema.json#/MinuteSummary" } }
+        truncated: { type: boolean }
     ScenarioInfo: { $ref: "../../console/packages/protocol/schema.json#/ScenarioInfo" }
 security:
   - bearer: []

@@ -15,7 +15,7 @@ export function winnerOf(e: Pick<SceneEvent, "attrs">): string {
   const a = e.attrs;
   for (const k of ["team", "winner", "side", "player"]) {
     const v = a[k];
-    if (typeof v === "string" && v.trim()) return v.trim().toLowerCase();
+    if (typeof v === "string" && v.trim()) return v.trim().toUpperCase();
     if (typeof v === "number") return String(v);
   }
   return "unknown";
@@ -56,4 +56,27 @@ export function latestSnapshot(
   let best: SceneEvent | null = null;
   for (const e of events) if (e.type === "state.snapshot" && (!best || e.ts_ms >= best.ts_ms)) best = e;
   return best ? { ts_ms: best.ts_ms, state: best.attrs } : null;
+}
+
+/** Scoreboard state emitted by the agent in `state.snapshot.attrs`; null if shape doesn't match. */
+export interface SnapshotScore {
+  score: Record<string, number>;
+  serving_team?: string;
+  server_number?: number;
+  game?: number;
+  side_switched?: boolean;
+}
+export function parseSnapshotScore(state: Record<string, unknown>): SnapshotScore | null {
+  const sc = state.score;
+  if (!sc || typeof sc !== "object") return null;
+  const score: Record<string, number> = {};
+  for (const [k, v] of Object.entries(sc)) if (typeof v === "number") score[k] = v;
+  if (Object.keys(score).length === 0) return null;
+  return {
+    score,
+    serving_team: typeof state.serving_team === "string" ? state.serving_team : undefined,
+    server_number: typeof state.server_number === "number" ? state.server_number : undefined,
+    game: typeof state.game === "number" ? state.game : undefined,
+    side_switched: typeof state.side_switched === "boolean" ? state.side_switched : undefined,
+  };
 }

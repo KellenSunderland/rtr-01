@@ -134,7 +134,7 @@ TEST(ImageOps, Crop) {
   EXPECT_EQ(mc_crop(in.get(), 15, 0, 6, 1, bad.get()), MC_ERR_INVALID_ARG);
   EXPECT_EQ(mc_crop(in.get(), -1, 0, 2, 2, bad.get()), MC_ERR_INVALID_ARG);
   EXPECT_EQ(mc_crop(in.get(), 0, 0, 0, 2, bad.get()), MC_ERR_INVALID_ARG);
-  ASSERT_EQ(mc_crop(in.get(), 12, 6, 8, 4, out.get() == nullptr ? nullptr : bad.get()), MC_OK);  // exactly fits
+  ASSERT_EQ(mc_crop(in.get(), 12, 6, 8, 4, bad.get()), MC_OK);  // exactly fits
 }
 
 TEST(ImageOps, JpegRoundtrip) {
@@ -167,7 +167,7 @@ TEST(ImageOps, JpegColorOrderAndErrors) {
   ASSERT_EQ(mc_decode_image(buf, len, out.get()), MC_OK);
   EXPECT_GT(out.px(8, 8)[2], 200);  // BGR: red channel is index 2
   EXPECT_LT(out.px(8, 8)[0], 50);
-  EXPECT_EQ(mc_encode_jpeg(rgb.get(), 0, &buf + 1 - 1, &len), MC_ERR_INVALID_ARG);
+  EXPECT_EQ(mc_encode_jpeg(rgb.get(), 0, &buf, &len), MC_ERR_INVALID_ARG);
   mc_buffer_free(buf);
   const uint8_t junk[] = {1, 2, 3, 4, 5};
   Frame bad;

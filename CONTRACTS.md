@@ -77,6 +77,24 @@ to the workspace and must have 100% schema coverage tests.
 - **Tests**: every component has unit tests runnable offline with fakes. CI builds all
   four on ubuntu-latest (`.github/workflows/ci.yml`).
 
+## Clarifications (added after the console build; binding)
+
+- **WS auth**: browsers cannot set `Authorization` on a WebSocket handshake. All WS endpoints
+  (`/v1/sessions/{id}/ws`, and the internal ones) accept the bearer token either in the
+  `Authorization` header or as `?token=<token>` query parameter. Internal endpoints accept
+  `X-Internal-Token` header or `?token=`.
+- **History time domain**: `history.query.since_ms/until_ms` and `GET /v1/history?since_ms&until_ms`
+  are **wall-clock Unix epoch milliseconds** (the history spans sessions; the field names are
+  kept for compatibility). Returned `SceneEvent.ts_ms` remains the originating session's clock;
+  consumers display by `wall_ms`. The console seeds the timeline with `[now_wall − 1h, now_wall]`.
+- **`GET /v1/history` response** is `{ events, summaries, truncated }` (no `type`/`request_id`).
+- **pickleball_referee attrs**: `point.won` carries `attrs.team ∈ {"A","B"}` and `attrs.reason`;
+  `ball.bounce` carries `attrs.court_side ∈ {"A","B"}`, `attrs.in_bounds: boolean`;
+  `fault.*` carries `attrs.team`. The pack also emits a `state.snapshot` event
+  (`type: "state.snapshot"`, `attrs` = `State.snapshot()`) after every scoring change so the
+  console scoreboard can render without re-deriving.
+- **Frames**: `/v1/streams/{id}/frame` is `image/jpeg`; clients fetch with auth and render a blob URL.
+
 ## Identifiers
 
 - `stream_id`: `^[a-z0-9][a-z0-9_-]*$`, ≤64 chars, unique per gateway.

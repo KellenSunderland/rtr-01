@@ -21,6 +21,9 @@ class _M(BaseModel):
         return self.model_dump(mode="json", exclude_none=True)
 
 
+WireModel = _M
+
+
 class BBox(_M):
     x: float = Field(ge=0, le=1)
     y: float = Field(ge=0, le=1)

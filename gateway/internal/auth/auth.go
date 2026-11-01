@@ -118,7 +118,11 @@ func BearerToken(r *http.Request) string {
 		}
 		return ""
 	}
-	return r.URL.Query().Get("access_token")
+	q := r.URL.Query()
+	if t := q.Get("token"); t != "" {
+		return t
+	}
+	return q.Get("access_token")
 }
 
 type ctxKey struct{}
@@ -166,7 +170,11 @@ func (a *Authenticator) Internal(next http.Handler) http.Handler {
 			WriteError(w, http.StatusForbidden, "unauthorized", "internal endpoint is loopback only")
 			return
 		}
-		h := sha256.Sum256([]byte(r.Header.Get("X-Internal-Token")))
+		tok := r.Header.Get("X-Internal-Token")
+		if tok == "" {
+			tok = r.URL.Query().Get("token")
+		}
+		h := sha256.Sum256([]byte(tok))
 		if subtle.ConstantTimeCompare(h[:], a.internalHash[:]) != 1 {
 			WriteError(w, http.StatusUnauthorized, "unauthorized", "bad internal token")
 			return

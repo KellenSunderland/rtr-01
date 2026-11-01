@@ -63,12 +63,12 @@ export function useSession(api: ApiClient) {
           switch (msg.type) {
             case "session.started": {
               clock.start();
-              const now = clock.ms();
+              const wallNow = Date.now();
               s.send({
                 type: "history.query",
                 request_id: `seed-${++reqN.current}`,
-                since_ms: Math.max(0, now - WINDOW_MS),
-                until_ms: now + 1000,
+                since_ms: wallNow - WINDOW_MS, // wall-clock epoch ms (CONTRACTS clarification)
+                until_ms: wallNow,
                 limit: 200,
               });
               break;

@@ -293,19 +293,25 @@ function handleSession(ws: WebSocket, sess: { id: string; scenario: string; stre
   };
 
   let tick = 0;
-  let scores = { a: 0, b: 0 };
+  let scores: Record<string, number> = { A: 0, B: 0 };
   const periodic = setInterval(() => {
     if (!started) return;
     tick++;
     if (sess.scenario === "pickleball_referee") {
       if (tick % 2 === 1) emitEvent("rally.start", {}, "Rally started");
       else {
-        const team = Math.random() < 0.5 ? "a" : "b";
+        const team = Math.random() < 0.5 ? "A" : "B";
         scores = { ...scores, [team]: scores[team] + 1 };
         emitEvent("point.won", { team }, `Point to team ${team}`);
         emitEvent(
           "state.snapshot",
-          { score: `${scores.a}-${scores.b}`, server: team, side: tick % 4 === 0 ? "left" : "right" },
+          {
+            score: { ...scores },
+            serving_team: team,
+            server_number: 1 + (tick % 2),
+            game: 1,
+            side_switched: tick % 4 === 0,
+          },
           "State snapshot",
         );
       }

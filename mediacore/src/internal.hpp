@@ -128,7 +128,6 @@ class AudioRing {
 
  private:
   mutable std::mutex mu_;
-  int32_t rate_;
   size_t channels_;
   size_t capacity_;
   std::vector<int16_t> buf_;
