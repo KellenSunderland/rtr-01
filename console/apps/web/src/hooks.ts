@@ -27,7 +27,13 @@ export function useFrame(api: ApiClient, streamId: string, seekTs: number | null
     const tick = async () => {
       let delay = FRAME_POLL_MS;
       try {
-        show(await api.fetchFrame(streamId, { max_w: maxW, ...(seekTs !== null ? { ts_ms: seekTs } : {}) }, ctl.signal));
+        show(
+          await api.fetchFrame(
+            streamId,
+            { max_w: maxW, ...(seekTs !== null ? { ts_ms: seekTs } : {}) },
+            ctl.signal,
+          ),
+        );
         failures = 0;
         setError(null);
       } catch (e) {

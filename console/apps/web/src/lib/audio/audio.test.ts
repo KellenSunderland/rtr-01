@@ -67,7 +67,7 @@ describe("pcm helpers", () => {
     const r = new Resampler(48000, 16000);
     let total = 0;
     for (let i = 0; i < 10; i++) total += r.process(new Float32Array(128).fill(0.5)).length;
-    expect(Math.abs(total - (1280 / 3))).toBeLessThanOrEqual(2);
+    expect(Math.abs(total - 1280 / 3)).toBeLessThanOrEqual(2);
   });
   it("preserves a DC signal and passes through at equal rates", () => {
     const out = new Resampler(44100, 16000).process(new Float32Array(441).fill(0.25));

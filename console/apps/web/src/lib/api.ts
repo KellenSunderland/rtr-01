@@ -93,7 +93,10 @@ export class ApiClient {
     if (p.stream_id) qs.set("stream_id", p.stream_id);
     if (p.q) qs.set("q", p.q);
     if (p.limit) qs.set("limit", String(p.limit));
-    return this.json(`/v1/history?${qs}`, HistoryResult.pick({ events: true, summaries: true, truncated: true }));
+    return this.json(
+      `/v1/history?${qs}`,
+      HistoryResult.pick({ events: true, summaries: true, truncated: true }),
+    );
   }
 
   /** Relative path (no host) of a frame; tiles fetch it with auth and show a blob URL. */
@@ -104,7 +107,11 @@ export class ApiClient {
     const s = qs.toString();
     return `/v1/streams/${encodeURIComponent(id)}/frame${s ? `?${s}` : ""}`;
   }
-  async fetchFrame(id: string, opts: { ts_ms?: number; max_w?: number } = {}, signal?: AbortSignal): Promise<Blob> {
+  async fetchFrame(
+    id: string,
+    opts: { ts_ms?: number; max_w?: number } = {},
+    signal?: AbortSignal,
+  ): Promise<Blob> {
     const res = await this.request(ApiClient.framePath(id, opts), { signal });
     return res.blob();
   }

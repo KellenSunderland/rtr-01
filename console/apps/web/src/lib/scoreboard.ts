@@ -26,7 +26,13 @@ export function applyScoreEvent(s: Scoreboard, e: SceneEvent): Scoreboard {
   if (e.type === "rally.start") return { ...s, rallies: s.rallies + 1, rallyActive: true };
   if (e.type === "point.won") {
     const w = winnerOf(e);
-    return { ...s, scores: { ...s.scores, [w]: (s.scores[w] ?? 0) + 1 }, rallyActive: false, lastPointTs: e.ts_ms, lastWinner: w };
+    return {
+      ...s,
+      scores: { ...s.scores, [w]: (s.scores[w] ?? 0) + 1 },
+      rallyActive: false,
+      lastPointTs: e.ts_ms,
+      lastWinner: w,
+    };
   }
   return s;
 }
@@ -44,7 +50,9 @@ export function reduceScoreboard(events: readonly SceneEvent[]): Scoreboard {
 }
 
 /** attrs of the most recent `state.snapshot` event, if any. */
-export function latestSnapshot(events: readonly SceneEvent[]): { ts_ms: number; state: Record<string, unknown> } | null {
+export function latestSnapshot(
+  events: readonly SceneEvent[],
+): { ts_ms: number; state: Record<string, unknown> } | null {
   let best: SceneEvent | null = null;
   for (const e of events) if (e.type === "state.snapshot" && (!best || e.ts_ms >= best.ts_ms)) best = e;
   return best ? { ts_ms: best.ts_ms, state: best.attrs } : null;

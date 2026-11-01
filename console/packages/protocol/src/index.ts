@@ -11,7 +11,11 @@ import { z } from "zod";
 
 // ------------------------------------------------------------------ common
 
-export const StreamId = z.string().min(1).max(64).regex(/^[a-z0-9][a-z0-9_-]*$/);
+export const StreamId = z
+  .string()
+  .min(1)
+  .max(64)
+  .regex(/^[a-z0-9][a-z0-9_-]*$/);
 export const SessionId = z.string().uuid();
 
 export const BBox = z.object({
@@ -112,16 +116,32 @@ export const SessionStarted = z.object({
   streams: z.array(StreamInfo),
   server_wall_ms: z.number().int(),
 });
-export const TranscriptPartial = z.object({ type: z.literal("transcript.partial"), text: z.string(), ts_ms: z.number().int() });
-export const TranscriptFinal = z.object({ type: z.literal("transcript.final"), text: z.string(), ts_ms: z.number().int(), utterance_id: z.string() });
+export const TranscriptPartial = z.object({
+  type: z.literal("transcript.partial"),
+  text: z.string(),
+  ts_ms: z.number().int(),
+});
+export const TranscriptFinal = z.object({
+  type: z.literal("transcript.final"),
+  text: z.string(),
+  ts_ms: z.number().int(),
+  utterance_id: z.string(),
+});
 export const AssistantText = z.object({
   type: z.literal("assistant.text"),
   utterance_id: z.string(),
   delta: z.string(),
   final: z.boolean(),
 });
-export const AssistantAudio = AudioChunk.extend({ type: z.literal("assistant.audio"), utterance_id: z.string() });
-export const AssistantCancelled = z.object({ type: z.literal("assistant.cancelled"), utterance_id: z.string(), reason: z.enum(["barge_in", "stop", "error"]) });
+export const AssistantAudio = AudioChunk.extend({
+  type: z.literal("assistant.audio"),
+  utterance_id: z.string(),
+});
+export const AssistantCancelled = z.object({
+  type: z.literal("assistant.cancelled"),
+  utterance_id: z.string(),
+  reason: z.enum(["barge_in", "stop", "error"]),
+});
 export const EventMessage = z.object({ type: z.literal("event"), event: SceneEvent });
 export const SummaryMessage = z.object({ type: z.literal("summary"), summary: MinuteSummary });
 export const StreamStatus = z.object({ type: z.literal("stream.status"), stream: StreamInfo });
@@ -155,8 +175,15 @@ export const ServerMessage = z.discriminatedUnion("type", [
 
 // ------------------------------------------------------------- REST
 
-export const CreateStreamRequest = z.object({ id: StreamId, name: z.string().max(100), uri: z.string().max(2048) });
-export const CreateSessionRequest = z.object({ scenario: z.string(), stream_ids: z.array(StreamId).min(1).max(16) });
+export const CreateStreamRequest = z.object({
+  id: StreamId,
+  name: z.string().max(100),
+  uri: z.string().max(2048),
+});
+export const CreateSessionRequest = z.object({
+  scenario: z.string(),
+  stream_ids: z.array(StreamId).min(1).max(16),
+});
 export const SessionInfo = z.object({
   id: SessionId,
   scenario: z.string(),

@@ -134,7 +134,10 @@ export class ArgusSocket extends Emitter<SocketEvents> {
     }
     const r = ServerMessage.safeParse(json);
     if (!r.success) {
-      this.drop(r.error.issues[0] ? `${r.error.issues[0].path.join(".")}: ${r.error.issues[0].message}` : "schema", json);
+      this.drop(
+        r.error.issues[0] ? `${r.error.issues[0].path.join(".")}: ${r.error.issues[0].message}` : "schema",
+        json,
+      );
       return null;
     }
     return r.data;

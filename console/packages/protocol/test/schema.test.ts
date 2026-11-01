@@ -10,7 +10,14 @@ describe("schema.json", () => {
   });
   it("exposes the names openapi.yaml references", () => {
     const s = buildSchema();
-    for (const n of ["StreamInfo", "CreateStreamRequest", "CreateSessionRequest", "SessionInfo", "HistoryResult", "ScenarioInfo"]) {
+    for (const n of [
+      "StreamInfo",
+      "CreateStreamRequest",
+      "CreateSessionRequest",
+      "SessionInfo",
+      "HistoryResult",
+      "ScenarioInfo",
+    ]) {
       expect(s).toHaveProperty(n);
     }
   });

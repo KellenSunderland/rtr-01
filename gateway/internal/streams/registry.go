@@ -15,8 +15,8 @@ import (
 	"github.com/argus-video/argus/gateway/internal/protocol"
 )
 
-// StallAfter is how long without a frame before a live stream is "stalled".
-const StallAfter = 5 * time.Second
+// DefaultStallAfter is how long without a frame before a live stream is "stalled".
+const DefaultStallAfter = 5 * time.Second
 
 var (
 	ErrExists   = errors.New("stream id already exists")
@@ -50,6 +50,9 @@ type Stream struct {
 
 // Registry holds all streams.
 type Registry struct {
+	// StallAfter may be lowered (before streams start) in tests.
+	StallAfter time.Duration
+
 	m      media.Media
 	policy URIPolicy
 	log    *slog.Logger
@@ -72,7 +75,7 @@ func NewRegistry(m media.Media, policy URIPolicy, log *slog.Logger) *Registry {
 	if log == nil {
 		log = slog.Default()
 	}
-	return &Registry{m: m, policy: policy, log: log, origin: m.NowMonotonicNs(), streams: map[string]*Stream{}, nextIdx: 1, watchers: map[int]chan protocol.StreamInfo{}}
+	return &Registry{StallAfter: DefaultStallAfter, m: m, policy: policy, log: log, origin: m.NowMonotonicNs(), streams: map[string]*Stream{}, nextIdx: 1, watchers: map[int]chan protocol.StreamInfo{}}
 }
 
 // OriginNs is the gateway-level clock origin; ts_ms in REST/frames is relative to it
@@ -113,7 +116,7 @@ func (r *Registry) CheckStalls() {
 	r.mu.Unlock()
 	for _, s := range all {
 		s.mu.Lock()
-		stalled := s.state == protocol.StateLive && time.Since(s.lastMono) > StallAfter
+		stalled := s.state == protocol.StateLive && time.Since(s.lastMono) > r.StallAfter
 		if stalled {
 			s.state = protocol.StateStalled
 		}
@@ -387,3 +390,6 @@ func (s *Stream) onFrame(f media.Frame) {
 		s.r.notify(s)
 	}
 }
+
+// Done is closed when the capture goroutine has exited.
+func (s *Stream) Done() <-chan struct{} { return s.done }

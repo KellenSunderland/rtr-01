@@ -28,7 +28,8 @@ export class Mic {
     await this.ctx.audioWorklet.addModule(workletUrl);
     this.src = this.ctx.createMediaStreamSource(this.stream);
     this.node = new AudioWorkletNode(this.ctx, "argus-capture");
-    this.node.port.onmessage = (ev: MessageEvent<ArrayBuffer>) => this.cb.onChunk(pcm16ToBase64(new Int16Array(ev.data)));
+    this.node.port.onmessage = (ev: MessageEvent<ArrayBuffer>) =>
+      this.cb.onChunk(pcm16ToBase64(new Int16Array(ev.data)));
     this.src.connect(this.node); // not connected to destination: no echo of the mic
   }
 

@@ -9,7 +9,7 @@ export function floatToPcm16(input: Float32Array): Int16Array {
   return out;
 }
 
-export function pcm16ToFloat(input: Int16Array): Float32Array {
+export function pcm16ToFloat(input: Int16Array): Float32Array<ArrayBuffer> {
   const out = new Float32Array(input.length);
   for (let i = 0; i < input.length; i++) out[i] = (input[i] ?? 0) / 0x8000;
   return out;

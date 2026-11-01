@@ -32,6 +32,7 @@ type Config struct {
 	Tokens         []Token  `yaml:"tokens"`
 	Store          Store    `yaml:"store"`
 	LogLevel       string   `yaml:"log_level"`
+	AllowedOrigins []string `yaml:"allowed_origins"` // extra WS origin patterns (console dev server)
 }
 
 // Default returns a config with safe defaults (loopback listen, no tokens).

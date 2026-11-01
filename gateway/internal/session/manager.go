@@ -146,3 +146,8 @@ func (m *Manager) CloseAll() {
 		_ = m.Close(id)
 	}
 }
+
+// OriginOn returns the session start expressed on the media monotonic clock (ns).
+func (s *Session) OriginOn(nowMediaNs int64) int64 {
+	return nowMediaNs - time.Since(s.startMono).Nanoseconds()
+}

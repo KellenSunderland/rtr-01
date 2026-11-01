@@ -23,11 +23,19 @@ describe("sessionReducer transcript", () => {
       { type: "assistant.text", utterance_id: "u-2", delta: "there", final: false },
     ]);
     expect(s.transcript[0]).toMatchObject({ text: "Hi there", partial: true });
-    s = run([{ type: "assistant.cancelled", utterance_id: "u-2", reason: "barge_in" }, { type: "assistant.text", utterance_id: "u-2", delta: "!", final: true }], s);
+    s = run(
+      [
+        { type: "assistant.cancelled", utterance_id: "u-2", reason: "barge_in" },
+        { type: "assistant.text", utterance_id: "u-2", delta: "!", final: true },
+      ],
+      s,
+    );
     expect(s.transcript[0]).toMatchObject({ text: "Hi there", partial: false, cancelled: true });
   });
   it("keeps markup as plain text", () => {
-    const s = run([{ type: "assistant.text", utterance_id: "u-3", delta: "<img src=x onerror=alert(1)>", final: true }]);
+    const s = run([
+      { type: "assistant.text", utterance_id: "u-3", delta: "<img src=x onerror=alert(1)>", final: true },
+    ]);
     expect(s.transcript[0]!.text).toBe("<img src=x onerror=alert(1)>");
   });
 });

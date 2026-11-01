@@ -1,10 +1,28 @@
 import { describe, expect, it } from "vitest";
 import type { SceneEvent } from "@argus/protocol";
-import { MAX_EVENTS, bucketByMinute, filterByType, formatClock, fromFraction, inWindow, lastHour, mergeEvents, toFraction } from "./timeline";
+import {
+  MAX_EVENTS,
+  bucketByMinute,
+  filterByType,
+  formatClock,
+  fromFraction,
+  inWindow,
+  lastHour,
+  mergeEvents,
+  toFraction,
+} from "./timeline";
 
 const ev = (i: number, ts_ms: number, type = "a.b"): SceneEvent => ({
   id: `00000000-0000-4000-8000-${String(i).padStart(12, "0")}`,
-  stream_id: "c", ts_ms, wall_ms: 1, type, confidence: 1, actors: [], attrs: {}, summary: "", scenario: "s",
+  stream_id: "c",
+  ts_ms,
+  wall_ms: 1,
+  type,
+  confidence: 1,
+  actors: [],
+  attrs: {},
+  summary: "",
+  scenario: "s",
 });
 
 describe("window math", () => {

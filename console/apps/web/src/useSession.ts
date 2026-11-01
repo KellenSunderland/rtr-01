@@ -46,7 +46,13 @@ export function useSession(api: ApiClient) {
         player.current = new AudioPlayer();
         mic.current = new Mic({
           onChunk: (pcm16_b64) => {
-            sock.current?.send({ type: "audio.chunk", seq: seq.current++, ts_ms: clock.ms(), sample_rate: 16000, pcm16_b64 });
+            sock.current?.send({
+              type: "audio.chunk",
+              seq: seq.current++,
+              ts_ms: clock.ms(),
+              sample_rate: 16000,
+              pcm16_b64,
+            });
           },
         });
         const s = new ArgusSocket({ url: () => api.wsUrl(info.id), scenario, streamIds });

@@ -58,7 +58,8 @@ export function bucketByMinute(
   const first = Math.floor(w.startMs / MINUTE_MS);
   const last = Math.floor((w.endMs - 1) / MINUTE_MS);
   const buckets: Bucket[] = [];
-  for (let m = first; m <= last; m++) buckets.push({ startMs: m * MINUTE_MS, count: 0, byType: {}, summaries: [] });
+  for (let m = first; m <= last; m++)
+    buckets.push({ startMs: m * MINUTE_MS, count: 0, byType: {}, summaries: [] });
   for (const e of events) {
     if (!inWindow(e.ts_ms, w)) continue;
     const b = buckets[Math.floor(e.ts_ms / MINUTE_MS) - first];
@@ -74,12 +75,19 @@ export function bucketByMinute(
 }
 
 /** Empty `types` set means "no filter". */
-export function filterByType<T extends { type: string }>(items: readonly T[], types: ReadonlySet<string>): T[] {
+export function filterByType<T extends { type: string }>(
+  items: readonly T[],
+  types: ReadonlySet<string>,
+): T[] {
   return types.size === 0 ? [...items] : items.filter((i) => types.has(i.type));
 }
 
 /** Insert events by id (dedupe, later wins), sort by ts_ms then id, keep the newest `cap`. */
-export function mergeEvents(existing: readonly SceneEvent[], incoming: readonly SceneEvent[], cap = MAX_EVENTS): SceneEvent[] {
+export function mergeEvents(
+  existing: readonly SceneEvent[],
+  incoming: readonly SceneEvent[],
+  cap = MAX_EVENTS,
+): SceneEvent[] {
   const byId = new Map<string, SceneEvent>();
   for (const e of existing) byId.set(e.id, e);
   for (const e of incoming) byId.set(e.id, e);
@@ -87,7 +95,10 @@ export function mergeEvents(existing: readonly SceneEvent[], incoming: readonly 
   return all.length > cap ? all.slice(all.length - cap) : all;
 }
 
-export function mergeSummaries(existing: readonly MinuteSummary[], incoming: readonly MinuteSummary[]): MinuteSummary[] {
+export function mergeSummaries(
+  existing: readonly MinuteSummary[],
+  incoming: readonly MinuteSummary[],
+): MinuteSummary[] {
   const byKey = new Map<string, MinuteSummary>();
   for (const s of [...existing, ...incoming]) byKey.set(`${s.stream_id}@${s.minute_start_ms}`, s);
   return [...byKey.values()].sort((a, b) => a.minute_start_ms - b.minute_start_ms);

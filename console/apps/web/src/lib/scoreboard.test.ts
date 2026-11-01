@@ -5,15 +5,27 @@ import { applyScoreEvent, emptyScoreboard, latestSnapshot, reduceScoreboard } fr
 let n = 0;
 const ev = (type: string, ts_ms: number, attrs: Record<string, unknown> = {}): SceneEvent => ({
   id: `00000000-0000-4000-8000-${String(++n).padStart(12, "0")}`,
-  stream_id: "c", ts_ms, wall_ms: 1, type, confidence: 1, actors: [], attrs, summary: "", scenario: "pickleball_referee",
+  stream_id: "c",
+  ts_ms,
+  wall_ms: 1,
+  type,
+  confidence: 1,
+  actors: [],
+  attrs,
+  summary: "",
+  scenario: "pickleball_referee",
 });
 
 describe("scoreboard", () => {
   it("counts points per team and rallies", () => {
     const sb = reduceScoreboard([
-      ev("rally.start", 1), ev("point.won", 5, { team: "A" }),
-      ev("rally.start", 6), ev("point.won", 9, { winner: "b" }),
-      ev("rally.start", 10), ev("point.won", 12, { team: "a" }), ev("ball.bounce", 11),
+      ev("rally.start", 1),
+      ev("point.won", 5, { team: "A" }),
+      ev("rally.start", 6),
+      ev("point.won", 9, { winner: "b" }),
+      ev("rally.start", 10),
+      ev("point.won", 12, { team: "a" }),
+      ev("ball.bounce", 11),
     ]);
     expect(sb.scores).toEqual({ a: 2, b: 1 });
     expect(sb.rallies).toBe(3);
