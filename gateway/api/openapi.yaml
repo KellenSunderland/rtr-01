@@ -1,0 +1,140 @@
+openapi: 3.1.0
+info:
+  title: Argus Gateway API
+  version: 0.1.0
+  description: |
+    Public REST + WebSocket surface of the Argus gateway (Go). The console talks only
+    to the gateway. The gateway owns streams (capture + 1h frame store via mediacore),
+    sessions, auth/quotas, and clip export; it proxies conversation and history to the
+    agent service (see /internal and host/CONTRACTS.md).
+
+    Auth: `Authorization: Bearer <token>`. Tokens and their quotas come from the
+    gateway config file. Every error body is `{ "code": string, "message": string }`
+    with codes matching protocol `ErrorMessage.code`.
+servers:
+  - url: http://localhost:8080
+paths:
+  /healthz:
+    get:
+      summary: Liveness
+      security: []
+      responses: { "200": { description: ok } }
+  /v1/streams:
+    get:
+      summary: List streams visible to the token
+      responses:
+        "200": { description: ok, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/StreamInfo" } } } } }
+    post:
+      summary: Register and start capturing a stream
+      description: |
+        `uri` may be a file path (relative to the configured media root), an `rtsp://`,
+        `http(s)://` MJPEG URL, or `device:N`. The gateway validates the URI against the
+        configured allow-list (scheme + host policy) before opening it. Quota: max streams per token.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/CreateStreamRequest" } } } }
+      responses:
+        "201": { description: created, content: { application/json: { schema: { $ref: "#/components/schemas/StreamInfo" } } } }
+        "400": { $ref: "#/components/responses/Error" }
+        "409": { description: id already exists }
+        "429": { description: quota exceeded }
+  /v1/streams/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    get:
+      summary: Stream status
+      responses: { "200": { description: ok, content: { application/json: { schema: { $ref: "#/components/schemas/StreamInfo" } } } }, "404": { $ref: "#/components/responses/Error" } }
+    delete:
+      summary: Stop and remove the stream (frames are dropped from the store)
+      responses: { "204": { description: removed }, "404": { $ref: "#/components/responses/Error" } }
+  /v1/streams/{id}/frame:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+      - { name: ts_ms, in: query, schema: { type: integer }, description: "session-clock ms; omitted = latest" }
+      - { name: max_w, in: query, schema: { type: integer, default: 640, maximum: 1920 } }
+    get:
+      summary: JPEG frame nearest to ts_ms
+      responses:
+        "200": { description: jpeg, content: { image/jpeg: {} }, headers: { X-Frame-Ts-Ms: { schema: { type: integer } }, X-Frame-Wall-Ms: { schema: { type: integer } } } }
+        "404": { $ref: "#/components/responses/Error" }
+  /v1/streams/{id}/clip:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+      - { name: from_ms, in: query, required: true, schema: { type: integer } }
+      - { name: to_ms, in: query, required: true, schema: { type: integer } }
+      - { name: fps, in: query, schema: { type: number, default: 2, maximum: 10 } }
+    get:
+      summary: Export a clip as a ZIP of JPEG frames + index.json (max 10 minutes)
+      responses:
+        "200": { description: zip, content: { application/zip: {} } }
+        "400": { $ref: "#/components/responses/Error" }
+  /v1/sessions:
+    post:
+      summary: Create a conversation session over one or more streams
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/CreateSessionRequest" } } } }
+      responses: { "201": { description: created, content: { application/json: { schema: { $ref: "#/components/schemas/SessionInfo" } } } }, "429": { description: quota exceeded } }
+    get:
+      summary: List open sessions for the token
+      responses: { "200": { description: ok } }
+  /v1/sessions/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string, format: uuid } }]
+    get: { summary: Session info, responses: { "200": { description: ok } } }
+    delete: { summary: Close session, responses: { "204": { description: closed } } }
+  /v1/sessions/{id}/ws:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string, format: uuid } }]
+    get:
+      summary: WebSocket upgrade for the duplex session
+      description: |
+        Messages are JSON text frames conforming to `ClientMessage` / `ServerMessage` in
+        @argus/protocol. First client message must be `session.start`. The gateway
+        relays audio/text to the agent (internal WS), relays agent output back, and
+        injects `event`, `summary`, `stream.status` messages as they occur.
+        Ordering guarantee: messages for one `utterance_id` are delivered in order;
+        `assistant.cancelled` is always the last message for a cancelled utterance.
+      responses: { "101": { description: switching protocols } }
+  /v1/history:
+    get:
+      summary: Query the 1h history (proxied to the agent)
+      parameters:
+        - { name: stream_id, in: query, schema: { type: string } }
+        - { name: since_ms, in: query, required: true, schema: { type: integer } }
+        - { name: until_ms, in: query, required: true, schema: { type: integer } }
+        - { name: q, in: query, schema: { type: string, maxLength: 500 } }
+        - { name: limit, in: query, schema: { type: integer, default: 50, maximum: 200 } }
+      responses: { "200": { description: ok, content: { application/json: { schema: { $ref: "#/components/schemas/HistoryResult" } } } } }
+  /v1/scenarios:
+    get:
+      summary: Scenario packs available on the agent
+      responses: { "200": { description: ok, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/ScenarioInfo" } } } } } }
+
+  # ---- internal: agent <-> gateway (localhost only, shared secret header X-Internal-Token)
+  /internal/frames/{stream_id}:
+    parameters: [{ name: stream_id, in: path, required: true, schema: { type: string } }]
+    get:
+      summary: WebSocket of motion-gated frames for the agent's perception workers
+      description: |
+        Binary frames: 16-byte header (uint32 stream_idx, int64 ts_ms, int32 jpeg_len, little-endian)
+        followed by JPEG bytes; the gateway sends a frame when
+        `mc_motion_score(prev_sent, cur) >= min_motion` or `max_interval_ms` elapsed.
+        Query: `min_motion` (default 0.02), `max_interval_ms` (default 5000), `max_w` (default 640).
+      responses: { "101": { description: switching protocols } }
+  /internal/sessions/{id}/ws:
+    get:
+      summary: Agent-side duplex session (gateway dials the agent)
+      description: Same ClientMessage/ServerMessage framing; the gateway is the client.
+      responses: { "101": { description: switching protocols } }
+
+components:
+  securitySchemes:
+    bearer: { type: http, scheme: bearer }
+  responses:
+    Error:
+      description: error
+      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+  schemas:
+    Error: { type: object, required: [code, message], properties: { code: { type: string }, message: { type: string } } }
+    StreamInfo: { $ref: "../../console/packages/protocol/schema.json#/StreamInfo" }
+    CreateStreamRequest: { $ref: "../../console/packages/protocol/schema.json#/CreateStreamRequest" }
+    CreateSessionRequest: { $ref: "../../console/packages/protocol/schema.json#/CreateSessionRequest" }
+    SessionInfo: { $ref: "../../console/packages/protocol/schema.json#/SessionInfo" }
+    HistoryResult: { $ref: "../../console/packages/protocol/schema.json#/HistoryResult" }
+    ScenarioInfo: { $ref: "../../console/packages/protocol/schema.json#/ScenarioInfo" }
+security:
+  - bearer: []
