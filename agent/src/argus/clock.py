@@ -27,7 +27,8 @@ class SessionClock:
         return self.offset_ms + ts_ms
 
     def now_wall_ms(self) -> int:
-        return self._wall()
+        # never behind data we have already stamped (matters for fixture/virtual-time replays)
+        return max(self._wall(), self.offset_ms + self.latest_ts_ms)
 
     def now_ts_ms(self) -> int:
         return max(self.latest_ts_ms, self._wall() - self.offset_ms, 0)

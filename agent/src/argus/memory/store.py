@@ -3,8 +3,8 @@
 All SQL is parameterised. DB calls are short and run inline on the event loop thread; a lock guards the
 single connection. Embeddings are produced lazily in batches by :meth:`MemoryStore.embed_pending`.
 
-Time-window semantics: ``since_ms <= ts_ms < until_ms`` (half-open) on the *session clock* ``ts_ms``;
-summaries match when their minute ``[start, start+60000)`` overlaps the window.
+Time-window semantics (CONTRACTS.md "History time domain"): ``since_ms <= wall_ms < until_ms``
+(half-open) on **wall-clock epoch ms**, for events and minute summaries alike (history spans sessions).
 """
 
 from __future__ import annotations
@@ -218,25 +218,35 @@ class MemoryStore:
         return [self._row_event(r) for r in reversed(rows)]
 
     def events_in(self, stream_id: str | None, since_ms: int, until_ms: int) -> list[SceneEvent]:
+        """Events with ``since_ms <= wall_ms < until_ms``."""
         with self._lock:
             rows = self._events_rows(stream_id, since_ms, until_ms)
         return [self._row_event(r) for r in rows]
 
+    def events_by_ts(self, stream_id: str, since_ts_ms: int, until_ts_ms: int) -> list[SceneEvent]:
+        """Events with ``since <= ts_ms < until`` on the session clock (compactor minute bucketing)."""
+        with self._lock:
+            rows = self.db.execute(
+                "SELECT * FROM events WHERE stream_id=? AND ts_ms>=? AND ts_ms<? ORDER BY ts_ms, rowid",
+                (stream_id, since_ts_ms, until_ts_ms),
+            ).fetchall()
+        return [self._row_event(r) for r in rows]
+
     def _events_rows(self, stream_id: str | None, since_ms: int, until_ms: int) -> list[sqlite3.Row]:
-        sql = "SELECT * FROM events WHERE ts_ms>=? AND ts_ms<?"
+        sql = "SELECT * FROM events WHERE wall_ms>=? AND wall_ms<?"
         args: list[Any] = [since_ms, until_ms]
         if stream_id is not None:
             sql += " AND stream_id=?"
             args.append(stream_id)
-        return self.db.execute(sql + " ORDER BY ts_ms, rowid", args).fetchall()
+        return self.db.execute(sql + " ORDER BY wall_ms, ts_ms, rowid", args).fetchall()
 
     def _summary_rows(self, stream_id: str | None, since_ms: int, until_ms: int) -> list[sqlite3.Row]:
-        sql = "SELECT rowid AS rid, * FROM minute_summaries WHERE minute_start_ms < ? AND minute_start_ms + ? > ?"
-        args: list[Any] = [until_ms, MINUTE_MS, since_ms]
+        sql = "SELECT rowid AS rid, * FROM minute_summaries WHERE wall_ms>=? AND wall_ms<?"
+        args: list[Any] = [since_ms, until_ms]
         if stream_id is not None:
             sql += " AND stream_id=?"
             args.append(stream_id)
-        return self.db.execute(sql + " ORDER BY minute_start_ms, rowid", args).fetchall()
+        return self.db.execute(sql + " ORDER BY wall_ms, rowid", args).fetchall()
 
     @staticmethod
     def _row_summary(r: sqlite3.Row) -> MinuteSummary:
@@ -267,7 +277,7 @@ class MemoryStore:
     ) -> SearchResult:
         """Time-window filter, then (if ``text``) vector top-k re-ranked by ``0.7*cos + 0.3*recency``.
 
-        ``recency`` is the position of ``ts_ms`` inside the window (1 = newest). Without ``text`` the
+        ``recency`` is the position of ``wall_ms`` inside the window (1 = newest). Without ``text`` the
         newest ``limit`` events are returned in chronological order.
         """
         if until_ms <= since_ms:
@@ -296,17 +306,17 @@ class MemoryStore:
             scos = self._knn("summaries_vec", [int(r["rid"]) for r in srows[-_MAX_CANDIDATES:]], q)
         scored = sorted(
             (
-                (W_COS * cos.get(int(r["rowid"]), 0.0) + W_RECENCY * recency(r["ts_ms"]), r)
+                (W_COS * cos.get(int(r["rowid"]), 0.0) + W_RECENCY * recency(r["wall_ms"]), r)
                 for r in rows
                 if int(r["rowid"]) in cos
             ),
-            key=lambda x: (-x[0], -x[1]["ts_ms"]),
+            key=lambda x: (-x[0], -x[1]["wall_ms"]),
         )
         truncated = len(scored) > limit
         top = scored[:limit]
         sscored = sorted(
             (
-                (W_COS * scos.get(int(r["rid"]), 0.0) + W_RECENCY * recency(r["minute_start_ms"] + MINUTE_MS - 1), r)
+                (W_COS * scos.get(int(r["rid"]), 0.0) + W_RECENCY * recency(r["wall_ms"]), r)
                 for r in srows
                 if int(r["rid"]) in scos
             ),

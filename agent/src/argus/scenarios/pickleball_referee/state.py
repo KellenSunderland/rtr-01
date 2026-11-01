@@ -14,6 +14,9 @@ Rules implemented
   not modelled.)
 * ``rally.start`` may carry ``server_team``; if it disagrees with the tracked server, the observation
   wins (the camera sees the actual server) and server number resets to 1.
+* `point.won` carries `attrs.team` ("A"/"B") and `attrs.reason`; `ball.bounce` carries
+  `court_side` ("A"/"B" = whose half) and `in_bounds`.
+* After each scoring change the core emits a derived `state.snapshot` event (attrs = `snapshot()`).
 * Faults (``fault.kitchen``, ``fault.serve``) are recorded but do not score by themselves; the vision
   model emits a ``point.won`` for the fault's opponent.
 """
@@ -53,6 +56,7 @@ class State(ScenarioState):
         self.rally_active = False
         self.history: list[dict[str, Any]] = []
         self.ignored = 0
+        self.scoring_version = 0  # bumped on every scoring change; the core emits `state.snapshot` on bump
 
     def apply(self, event: SceneEvent) -> None:
         if self.match_winner is not None:
@@ -81,6 +85,7 @@ class State(ScenarioState):
 
     def _award(self, team: str, event: SceneEvent) -> None:
         self.rally_active = False
+        self.scoring_version += 1
         server_before = (self.serving, self.server_num)
         self.score[team] += 1
         if team != self.serving:  # serving team lost the rally -> rotate
@@ -94,9 +99,12 @@ class State(ScenarioState):
             "score": dict(self.score),
             "ts_ms": event.ts_ms,
             "server_before": {"team": server_before[0], "server_number": server_before[1]},
-            "reason": self.last_fault["type"]
-            if self.last_fault and self.last_fault.get("ts_ms", -1) >= event.ts_ms - 15000
-            else None,
+            "reason": event.attrs.get("reason")
+            or (
+                self.last_fault["type"]
+                if self.last_fault and self.last_fault.get("ts_ms", -1) >= event.ts_ms - 15000
+                else None
+            ),
         }
         self.history.append(self.last_point)
         if self._game_won(team):
@@ -127,6 +135,7 @@ class State(ScenarioState):
             "serving_team": self.serving,
             "server_number": self.server_num,
             "sides": dict(self.sides),
+            "scoring_version": self.scoring_version,
             "side_switches": self.side_switches,
             "match_winner": self.match_winner,
             "rally_active": self.rally_active,

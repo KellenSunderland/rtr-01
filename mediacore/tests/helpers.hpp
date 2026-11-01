@@ -19,6 +19,14 @@ struct Frame {
   Frame(const Frame&) = delete;
   Frame& operator=(const Frame&) = delete;
   Frame(Frame&& o) noexcept : f(o.f) { o.f = mc_frame{}; }
+  Frame& operator=(Frame&& o) noexcept {
+    if (this != &o) {
+      mc_frame_free(&f);
+      f = o.f;
+      o.f = mc_frame{};
+    }
+    return *this;
+  }
   ~Frame() { mc_frame_free(&f); }
   mc_frame* get() { return &f; }
   void fill(uint8_t v) { std::memset(f.data, v, static_cast<size_t>(f.stride) * static_cast<size_t>(f.height)); }

@@ -49,7 +49,7 @@ class Compactor:
     ) -> list[MinuteSummary]:
         """Summarize every minute of ``stream_id`` that closed before ``now_ts_ms`` and has no summary."""
         cutoff = now_ts_ms + 1 if include_open_minute else now_ts_ms - now_ts_ms % MINUTE_MS
-        events = self.store.events_in(stream_id, 0, max(cutoff, 0))
+        events = self.store.events_by_ts(stream_id, 0, max(cutoff, 0))
         by_minute: dict[int, list[SceneEvent]] = {}
         for e in events:
             by_minute.setdefault(e.ts_ms - e.ts_ms % MINUTE_MS, []).append(e)

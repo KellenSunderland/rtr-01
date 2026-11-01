@@ -301,7 +301,7 @@ function handleSession(ws: WebSocket, sess: { id: string; scenario: string; stre
       if (tick % 2 === 1) emitEvent("rally.start", {}, "Rally started");
       else {
         const team = Math.random() < 0.5 ? "A" : "B";
-        scores = { ...scores, [team]: scores[team] + 1 };
+        scores = { ...scores, [team]: (scores[team] ?? 0) + 1 };
         emitEvent("point.won", { team }, `Point to team ${team}`);
         emitEvent(
           "state.snapshot",

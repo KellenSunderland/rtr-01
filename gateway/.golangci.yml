@@ -1,0 +1,15 @@
+version: "2"
+linters:
+  settings:
+    errcheck:
+      exclude-functions:
+        - fmt.Fprintf
+        - fmt.Fprintln
+        - (*github.com/coder/websocket.Conn).CloseNow
+        - (github.com/argus-video/argus/gateway/internal/media.Capture).Close
+        - (*net/http.Response.Body).Close
+        - (io.Closer).Close
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters: [errcheck, staticcheck]

@@ -114,8 +114,8 @@ export function SessionPage() {
         events={state.events}
         summaries={state.summaries}
         nowMs={nowMs}
-        seekTs={seekTs}
-        onSeek={setSeekTs}
+        seekTs={seekTs === null ? null : seekTs + wallOffset()}
+        onSeek={(wall) => setSeekTs(wall === null ? null : Math.max(0, wall - wallOffset()))}
       />
       <div className="cols">
         <Transcript entries={state.transcript} />

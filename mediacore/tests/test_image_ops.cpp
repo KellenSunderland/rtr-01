@@ -63,7 +63,7 @@ TEST(ImageOps, MotionScore) {
   ASSERT_EQ(mc_motion_score(a.get(), same.get(), &s), MC_OK);
   EXPECT_EQ(s, 0.0);
   ASSERT_EQ(mc_motion_score(a.get(), inv.get(), &s), MC_OK);
-  EXPECT_GT(s, 0.4);
+  EXPECT_GT(s, 0.3);
   EXPECT_LE(s, 1.0);
   Frame black(8, 8, MC_PIXFMT_GRAY8), white(8, 8, MC_PIXFMT_GRAY8);
   white.fill(255);

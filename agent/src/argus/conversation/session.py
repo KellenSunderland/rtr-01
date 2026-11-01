@@ -479,7 +479,7 @@ class Session:
         mb = float(args.get("minutes_back", default_min))
         if not (0 < mb <= 60):
             raise ValueError("minutes_back must be in (0, 60]")
-        now = self.clock.now_ts_ms()
+        now = self.clock.now_wall_ms()  # history windows are wall-clock epoch ms
         sid = args.get("stream_id")
         if sid is not None and sid not in self.stream_ids:
             raise ValueError(f"unknown stream_id {sid!r}")

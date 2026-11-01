@@ -22,7 +22,7 @@ from argus.scenarios.base import (
 )
 
 PACK_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
-ATTR_TYPES = {"string", "number", "boolean", "array"}
+ATTR_TYPES = {"string", "number", "boolean", "array", "object"}
 SEVERITIES = {"low", "medium", "high"}
 BUILTIN_DIR = Path(__file__).parent
 

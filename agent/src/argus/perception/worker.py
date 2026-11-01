@@ -30,6 +30,7 @@ log = logging.getLogger(__name__)
 HEADER = struct.Struct("<Iqi")  # uint32 stream_idx, int64 ts_ms, int32 jpeg_len (16 bytes)
 MAX_BINARY = 256 * 1024
 MAX_SUMMARY = 500
+SNAPSHOT_TYPE = "state.snapshot"  # derived by the agent from State, never accepted from the model
 FrameSource = AsyncIterator[Frame]
 
 
@@ -206,13 +207,41 @@ class PerceptionWorker:
         events.sort(key=lambda e: e.ts_ms)  # stable: fixture/model order preserved within a ts
         if events and self.store is not None:
             self.store.add_events(events)
+        out: list[SceneEvent] = []
         for ev in events:
-            if self.state is not None:
-                self.state.apply(ev)
-            await self.on_event(ev)
-            self.events_emitted += 1
-            self.metrics.inc("argus_events_total", type=ev.type)
-        return events
+            out.append(ev)
+            await self._emit(ev)
+            snap = self._apply_state(ev)
+            if snap is not None:
+                out.append(snap)
+                await self._emit(snap)
+        return out
+
+    async def _emit(self, ev: SceneEvent) -> None:
+        await self.on_event(ev)
+        self.events_emitted += 1
+        self.metrics.inc("argus_events_total", type=ev.type)
+
+    def _apply_state(self, ev: SceneEvent) -> SceneEvent | None:
+        """Feed the pack State; if it reports a scoring change, return a derived ``state.snapshot`` event."""
+        st = self.state
+        if st is None:
+            return None
+        before = getattr(st, "scoring_version", None)
+        st.apply(ev)
+        if before is None or getattr(st, "scoring_version", before) == before:
+            return None
+        if SNAPSHOT_TYPE not in self.pack.event_types:
+            return None
+        snap = st.snapshot()
+        sev = SceneEvent(
+            id=str(uuid.uuid4()), stream_id=ev.stream_id, ts_ms=ev.ts_ms, wall_ms=ev.wall_ms,
+            type=SNAPSHOT_TYPE, confidence=1.0, attrs=snap, summary=f"State snapshot after {ev.type}",
+            frame_ref=ev.frame_ref, scenario=ev.scenario,
+        )  # fmt: skip
+        if self.store is not None:
+            self.store.add_events([sev])
+        return sev
 
     def _drop(self, reason: str) -> None:
         self.metrics.inc("argus_observations_dropped_total", reason=reason)
@@ -222,6 +251,9 @@ class PerceptionWorker:
         if o.event_type == "none":
             return None
         spec = self.pack.event_types.get(o.event_type)
+        if o.event_type == SNAPSHOT_TYPE:
+            self._drop("derived_type")
+            return None
         if spec is None:
             self._drop("unknown_type")
             return None

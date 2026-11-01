@@ -104,12 +104,12 @@ int zero_crossings(const std::vector<int16_t>& v) {
 
 TEST(Resample, OutputCountFormula) {
   int16_t in[10] = {};
-  int16_t out[16];
+  int16_t out[32];
   size_t n = 99;
   EXPECT_EQ(mc_resample_pcm16(in, 10, 44100, 16000, out, 3, &n), MC_ERR_FULL);  // needs ceil(3.628)=4
   ASSERT_EQ(mc_resample_pcm16(in, 10, 44100, 16000, out, 4, &n), MC_OK);
   EXPECT_EQ(n, 4u);
-  ASSERT_EQ(mc_resample_pcm16(in, 10, 16000, 48000, out, 16, &n), MC_OK);
+  ASSERT_EQ(mc_resample_pcm16(in, 10, 16000, 48000, out, 32, &n), MC_OK);
   EXPECT_EQ(n, 30u);
   ASSERT_EQ(mc_resample_pcm16(in, 10, 8000, 8000, out, 16, &n), MC_OK);
   EXPECT_EQ(n, 10u);

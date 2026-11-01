@@ -19,7 +19,7 @@ from argus.conversation.session import FrameSourceFactory, Session, SessionDeps
 from argus.memory.store import MemoryStore
 from argus.metrics import Metrics
 from argus.perception.sanitize import GLOBAL as GLOBAL_SANITIZER
-from argus.protocol import STREAM_ID_RE, ErrorMessage, HistoryResult, ScenarioEventType, ScenarioInfo
+from argus.protocol import STREAM_ID_RE, ErrorMessage, ScenarioEventType, ScenarioInfo
 from argus.providers import registry as provider_registry
 from argus.providers.registry import Providers
 from argus.scenarios.base import CORE_TOOL_NAMES
@@ -78,13 +78,14 @@ def create_app(
     app.state.sessions = sessions
     app.state.settings = settings
 
-    def token_ok(given: str | None) -> bool:
+    def token_ok(given: str | None, query: str | None = None) -> bool:
+        given = given or query
         if not settings.internal_token:
             return True  # dev mode: `argus serve` refuses non-loopback binds without a token
         return given is not None and hmac.compare_digest(given.encode(), settings.internal_token.encode())
 
     async def require_token(request: Request) -> None:
-        if not token_ok(request.headers.get("x-internal-token")):
+        if not token_ok(request.headers.get("x-internal-token"), request.query_params.get("token")):
             raise HTTPException(401, "invalid internal token")
 
     @app.exception_handler(HTTPException)
@@ -120,24 +121,28 @@ def create_app(
         ]
 
     @app.get("/v1/history", dependencies=[Depends(require_token)])
-    async def history(
+    async def history(  # since_ms/until_ms: wall-clock epoch ms
+
         since_ms: Annotated[int, Query(ge=0)],
         until_ms: Annotated[int, Query(ge=0)],
         stream_id: Annotated[str | None, Query(max_length=64)] = None,
         q: Annotated[str | None, Query(max_length=500)] = None,
         limit: Annotated[int, Query(ge=1, le=200)] = 50,
-        request_id: str = "",
     ) -> dict[str, Any]:
         if stream_id is not None and not STREAM_ID_RE.match(stream_id):
             raise HTTPException(400, "invalid stream_id")
         if until_ms < since_ms:
             raise HTTPException(400, "until_ms < since_ms")
         r = await store.search(stream_id, since_ms=since_ms, until_ms=until_ms, text=q, limit=limit)
-        return HistoryResult(request_id=request_id, events=r.events, summaries=r.summaries, truncated=r.truncated).wire()
+        return {
+            "events": [e.wire() for e in r.events],
+            "summaries": [x.wire() for x in r.summaries],
+            "truncated": r.truncated,
+        }
 
     @app.websocket("/internal/sessions/{session_id}/ws")
     async def session_ws(ws: WebSocket, session_id: str) -> None:
-        if not token_ok(ws.headers.get("x-internal-token")) or session_id in sessions or len(session_id) > 64:
+        if not token_ok(ws.headers.get("x-internal-token"), ws.query_params.get("token")) or session_id in sessions or len(session_id) > 64:
             await ws.close(code=1008)
             return
         await ws.accept()

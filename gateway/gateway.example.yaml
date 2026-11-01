@@ -1,0 +1,11 @@
+listen: 127.0.0.1:8080
+agent_url: http://127.0.0.1:8090
+internal_token: change-me-internal
+media_root: ./media
+allowed_schemes: [file, device, rtsp, http, https, fake]   # drop "fake" in production
+allowed_hosts: [cam.local]            # hosts permitted for rtsp/http(s) URIs
+allowed_origins: ["localhost:5173"]   # extra browser WS origins (console dev server)
+log_level: info
+tokens:
+  - { name: dev, token: dev-token-change-me, max_streams: 4, max_sessions: 2 }
+store: { retention_sec: 3600, thin_after_sec: 300, thinned_interval_ms: 1000, max_bytes: 2147483648 }

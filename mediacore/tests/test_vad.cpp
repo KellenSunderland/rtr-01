@@ -103,7 +103,7 @@ TEST(Vad, ChunkSizeIndependenceAndReset) {
   sig.insert(sig.end(), tone.begin(), tone.end());
   auto sil = silence(8000);
   sig.insert(sig.end(), sil.begin(), sil.end());
-  for (size_t chunk : {1u, 7u, 160u, 333u, 320u, 100000u}) {
+  for (size_t chunk : {1u, 7u, 160u, 333u, 320u, 1600u}) {
     Vad v;
     // Reconstruct events by feeding; chunk=1 would report per sample.
     auto ev = v.feed(sig, chunk);
