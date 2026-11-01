@@ -1,0 +1,2228 @@
+{
+  "Actor": {
+    "type": "object",
+    "properties": {
+      "label": {
+        "type": "string"
+      },
+      "track_id": {
+        "type": "string"
+      },
+      "bbox": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "y": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "w": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "h": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "required": [
+          "x",
+          "y",
+          "w",
+          "h"
+        ],
+        "additionalProperties": false
+      },
+      "confidence": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      }
+    },
+    "required": [
+      "label"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "AssistantAudio": {
+    "type": "object",
+    "properties": {
+      "seq": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "ts_ms": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "sample_rate": {
+        "type": "number",
+        "enum": [
+          16000,
+          24000,
+          48000
+        ]
+      },
+      "pcm16_b64": {
+        "type": "string"
+      },
+      "type": {
+        "type": "string",
+        "const": "assistant.audio"
+      },
+      "utterance_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "seq",
+      "ts_ms",
+      "sample_rate",
+      "pcm16_b64",
+      "type",
+      "utterance_id"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "AssistantCancelled": {
+    "type": "object",
+    "properties": {
+      "type": {
+        "type": "string",
+        "const": "assistant.cancelled"
+      },
+      "utterance_id": {
+        "type": "string"
+      },
+      "reason": {
+        "type": "string",
+        "enum": [
+          "barge_in",
+          "stop",
+          "error"
+        ]
+      }
+    },
+    "required": [
+      "type",
+      "utterance_id",
+      "reason"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "AssistantText": {
+    "type": "object",
+    "properties": {
+      "type": {
+        "type": "string",
+        "const": "assistant.text"
+      },
+      "utterance_id": {
+        "type": "string"
+      },
+      "delta": {
+        "type": "string"
+      },
+      "final": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "type",
+      "utterance_id",
+      "delta",
+      "final"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "AudioChunk": {
+    "type": "object",
+    "properties": {
+      "seq": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "ts_ms": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "sample_rate": {
+        "type": "number",
+        "enum": [
+          16000,
+          24000,
+          48000
+        ]
+      },
+      "pcm16_b64": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "seq",
+      "ts_ms",
+      "sample_rate",
+      "pcm16_b64"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "BargeIn": {
+    "type": "object",
+    "properties": {
+      "type": {
+        "type": "string",
+        "const": "control.barge_in"
+      }
+    },
+    "required": [
+      "type"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "BBox": {
+    "type": "object",
+    "properties": {
+      "x": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "y": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "w": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "h": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      }
+    },
+    "required": [
+      "x",
+      "y",
+      "w",
+      "h"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "ClientAudio": {
+    "type": "object",
+    "properties": {
+      "seq": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "ts_ms": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "sample_rate": {
+        "type": "number",
+        "enum": [
+          16000,
+          24000,
+          48000
+        ]
+      },
+      "pcm16_b64": {
+        "type": "string"
+      },
+      "type": {
+        "type": "string",
+        "const": "audio.chunk"
+      }
+    },
+    "required": [
+      "seq",
+      "ts_ms",
+      "sample_rate",
+      "pcm16_b64",
+      "type"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "ClientMessage": {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "session.start"
+          },
+          "scenario": {
+            "type": "string"
+          },
+          "stream_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[a-z0-9][a-z0-9_-]*$"
+            },
+            "minItems": 1,
+            "maxItems": 16
+          },
+          "locale": {
+            "type": "string",
+            "default": "en-US"
+          }
+        },
+        "required": [
+          "type",
+          "scenario",
+          "stream_ids"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "seq": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "ts_ms": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sample_rate": {
+            "type": "number",
+            "enum": [
+              16000,
+              24000,
+              48000
+            ]
+          },
+          "pcm16_b64": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "const": "audio.chunk"
+          }
+        },
+        "required": [
+          "seq",
+          "ts_ms",
+          "sample_rate",
+          "pcm16_b64",
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "text.message"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          }
+        },
+        "required": [
+          "type",
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "control.barge_in"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "control.stop"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "history.query"
+          },
+          "request_id": {
+            "type": "string"
+          },
+          "stream_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[a-z0-9][a-z0-9_-]*$"
+          },
+          "since_ms": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "until_ms": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200,
+            "default": 50
+          }
+        },
+        "required": [
+          "type",
+          "request_id",
+          "since_ms",
+          "until_ms"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "CreateSessionRequest": {
+    "type": "object",
+    "properties": {
+      "scenario": {
+        "type": "string"
+      },
+      "stream_ids": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+        },
+        "minItems": 1,
+        "maxItems": 16
+      }
+    },
+    "required": [
+      "scenario",
+      "stream_ids"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "CreateStreamRequest": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64,
+        "pattern": "^[a-z0-9][a-z0-9_-]*$"
+      },
+      "name": {
+        "type": "string",
+        "maxLength": 100
+      },
+      "uri": {
+        "type": "string",
+        "maxLength": 2048
+      }
+    },
+    "required": [
+      "id",
+      "name",
+      "uri"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "ErrorMessage": {
+    "type": "object",
+    "properties": {
+      "type": {
+        "type": "string",
+        "const": "error"
+      },
+      "code": {
+        "type": "string",
+        "enum": [
+          "bad_request",
+          "unauthorized",
+          "quota",
+          "not_found",
+          "upstream",
+          "internal"
+        ]
+      },
+      "message": {
+        "type": "string"
+      },
+      "request_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "type",
+      "code",
+      "message"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "EventMessage": {
+    "type": "object",
+    "properties": {
+      "type": {
+        "type": "string",
+        "const": "event"
+      },
+      "event": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "stream_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[a-z0-9][a-z0-9_-]*$"
+          },
+          "ts_ms": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "wall_ms": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "type": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "actors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "track_id": {
+                  "type": "string"
+                },
+                "bbox": {
+                  "type": "object",
+                  "properties": {
+                    "x": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "y": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "w": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "h": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    }
+                  },
+                  "required": [
+                    "x",
+                    "y",
+                    "w",
+                    "h"
+                  ],
+                  "additionalProperties": false
+                },
+                "confidence": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "required": [
+                "label"
+              ],
+              "additionalProperties": false
+            },
+            "default": []
+          },
+          "attrs": {
+            "type": "object",
+            "additionalProperties": {},
+            "default": {}
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "frame_ref": {
+            "type": "object",
+            "properties": {
+              "stream_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64,
+                "pattern": "^[a-z0-9][a-z0-9_-]*$"
+              },
+              "ts_ms": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "stream_id",
+              "ts_ms"
+            ],
+            "additionalProperties": false
+          },
+          "scenario": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "stream_id",
+          "ts_ms",
+          "wall_ms",
+          "type",
+          "confidence",
+          "summary",
+          "scenario"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "required": [
+      "type",
+      "event"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "FrameRef": {
+    "type": "object",
+    "properties": {
+      "stream_id": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64,
+        "pattern": "^[a-z0-9][a-z0-9_-]*$"
+      },
+      "ts_ms": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "required": [
+      "stream_id",
+      "ts_ms"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "HistoryQuery": {
+    "type": "object",
+    "properties": {
+      "type": {
+        "type": "string",
+        "const": "history.query"
+      },
+      "request_id": {
+        "type": "string"
+      },
+      "stream_id": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64,
+        "pattern": "^[a-z0-9][a-z0-9_-]*$"
+      },
+      "since_ms": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "until_ms": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "text": {
+        "type": "string",
+        "maxLength": 500
+      },
+      "limit": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 200,
+        "default": 50
+      }
+    },
+    "required": [
+      "type",
+      "request_id",
+      "since_ms",
+      "until_ms"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "HistoryResult": {
+    "type": "object",
+    "properties": {
+      "type": {
+        "type": "string",
+        "const": "history.result"
+      },
+      "request_id": {
+        "type": "string"
+      },
+      "events": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "stream_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[a-z0-9][a-z0-9_-]*$"
+            },
+            "ts_ms": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "wall_ms": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "type": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$"
+            },
+            "confidence": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "actors": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "track_id": {
+                    "type": "string"
+                  },
+                  "bbox": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      "y": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      "w": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      "h": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y",
+                      "w",
+                      "h"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "confidence": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  }
+                },
+                "required": [
+                  "label"
+                ],
+                "additionalProperties": false
+              },
+              "default": []
+            },
+            "attrs": {
+              "type": "object",
+              "additionalProperties": {},
+              "default": {}
+            },
+            "summary": {
+              "type": "string",
+              "maxLength": 500
+            },
+            "frame_ref": {
+              "type": "object",
+              "properties": {
+                "stream_id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64,
+                  "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                },
+                "ts_ms": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "stream_id",
+                "ts_ms"
+              ],
+              "additionalProperties": false
+            },
+            "scenario": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "stream_id",
+            "ts_ms",
+            "wall_ms",
+            "type",
+            "confidence",
+            "summary",
+            "scenario"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "summaries": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "stream_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[a-z0-9][a-z0-9_-]*$"
+            },
+            "minute_start_ms": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "wall_ms": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "text": {
+              "type": "string",
+              "maxLength": 2000
+            },
+            "event_count": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "stream_id",
+            "minute_start_ms",
+            "wall_ms",
+            "text",
+            "event_count"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "truncated": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "type",
+      "request_id",
+      "events",
+      "summaries",
+      "truncated"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "MinuteSummary": {
+    "type": "object",
+    "properties": {
+      "stream_id": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64,
+        "pattern": "^[a-z0-9][a-z0-9_-]*$"
+      },
+      "minute_start_ms": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "wall_ms": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "text": {
+        "type": "string",
+        "maxLength": 2000
+      },
+      "event_count": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "required": [
+      "stream_id",
+      "minute_start_ms",
+      "wall_ms",
+      "text",
+      "event_count"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "ScenarioInfo": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string"
+      },
+      "description": {
+        "type": "string"
+      },
+      "event_types": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "description"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "tools": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": [
+      "name",
+      "description",
+      "event_types",
+      "tools"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "SceneEvent": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "stream_id": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64,
+        "pattern": "^[a-z0-9][a-z0-9_-]*$"
+      },
+      "ts_ms": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "wall_ms": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "type": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$"
+      },
+      "confidence": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "actors": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "label": {
+              "type": "string"
+            },
+            "track_id": {
+              "type": "string"
+            },
+            "bbox": {
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "y": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "w": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "h": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "required": [
+                "x",
+                "y",
+                "w",
+                "h"
+              ],
+              "additionalProperties": false
+            },
+            "confidence": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "required": [
+            "label"
+          ],
+          "additionalProperties": false
+        },
+        "default": []
+      },
+      "attrs": {
+        "type": "object",
+        "additionalProperties": {},
+        "default": {}
+      },
+      "summary": {
+        "type": "string",
+        "maxLength": 500
+      },
+      "frame_ref": {
+        "type": "object",
+        "properties": {
+          "stream_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[a-z0-9][a-z0-9_-]*$"
+          },
+          "ts_ms": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "stream_id",
+          "ts_ms"
+        ],
+        "additionalProperties": false
+      },
+      "scenario": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "id",
+      "stream_id",
+      "ts_ms",
+      "wall_ms",
+      "type",
+      "confidence",
+      "summary",
+      "scenario"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "ServerMessage": {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "session.started"
+          },
+          "session_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "scenario": {
+            "type": "string"
+          },
+          "streams": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64,
+                  "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                },
+                "name": {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                "uri": {
+                  "type": "string",
+                  "maxLength": 2048
+                },
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "starting",
+                    "live",
+                    "stalled",
+                    "stopped",
+                    "error"
+                  ]
+                },
+                "fps": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "last_frame_wall_ms": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "uri",
+                "state"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "server_wall_ms": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "type",
+          "session_id",
+          "scenario",
+          "streams",
+          "server_wall_ms"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "transcript.partial"
+          },
+          "text": {
+            "type": "string"
+          },
+          "ts_ms": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "type",
+          "text",
+          "ts_ms"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "transcript.final"
+          },
+          "text": {
+            "type": "string"
+          },
+          "ts_ms": {
+            "type": "integer"
+          },
+          "utterance_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "text",
+          "ts_ms",
+          "utterance_id"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "assistant.text"
+          },
+          "utterance_id": {
+            "type": "string"
+          },
+          "delta": {
+            "type": "string"
+          },
+          "final": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "type",
+          "utterance_id",
+          "delta",
+          "final"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "seq": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "ts_ms": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sample_rate": {
+            "type": "number",
+            "enum": [
+              16000,
+              24000,
+              48000
+            ]
+          },
+          "pcm16_b64": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "const": "assistant.audio"
+          },
+          "utterance_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "seq",
+          "ts_ms",
+          "sample_rate",
+          "pcm16_b64",
+          "type",
+          "utterance_id"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "assistant.cancelled"
+          },
+          "utterance_id": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "barge_in",
+              "stop",
+              "error"
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "utterance_id",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "event"
+          },
+          "event": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "stream_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64,
+                "pattern": "^[a-z0-9][a-z0-9_-]*$"
+              },
+              "ts_ms": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "wall_ms": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "type": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$"
+              },
+              "confidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "actors": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "label": {
+                      "type": "string"
+                    },
+                    "track_id": {
+                      "type": "string"
+                    },
+                    "bbox": {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1
+                        },
+                        "y": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1
+                        },
+                        "w": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1
+                        },
+                        "h": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y",
+                        "w",
+                        "h"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "confidence": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    }
+                  },
+                  "required": [
+                    "label"
+                  ],
+                  "additionalProperties": false
+                },
+                "default": []
+              },
+              "attrs": {
+                "type": "object",
+                "additionalProperties": {},
+                "default": {}
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "frame_ref": {
+                "type": "object",
+                "properties": {
+                  "stream_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                  },
+                  "ts_ms": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "stream_id",
+                  "ts_ms"
+                ],
+                "additionalProperties": false
+              },
+              "scenario": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "stream_id",
+              "ts_ms",
+              "wall_ms",
+              "type",
+              "confidence",
+              "summary",
+              "scenario"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "type",
+          "event"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "summary"
+          },
+          "summary": {
+            "type": "object",
+            "properties": {
+              "stream_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64,
+                "pattern": "^[a-z0-9][a-z0-9_-]*$"
+              },
+              "minute_start_ms": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "wall_ms": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "text": {
+                "type": "string",
+                "maxLength": 2000
+              },
+              "event_count": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "stream_id",
+              "minute_start_ms",
+              "wall_ms",
+              "text",
+              "event_count"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "type",
+          "summary"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "stream.status"
+          },
+          "stream": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64,
+                "pattern": "^[a-z0-9][a-z0-9_-]*$"
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 100
+              },
+              "uri": {
+                "type": "string",
+                "maxLength": 2048
+              },
+              "state": {
+                "type": "string",
+                "enum": [
+                  "starting",
+                  "live",
+                  "stalled",
+                  "stopped",
+                  "error"
+                ]
+              },
+              "fps": {
+                "type": "number",
+                "minimum": 0
+              },
+              "last_frame_wall_ms": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "uri",
+              "state"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "type",
+          "stream"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "history.result"
+          },
+          "request_id": {
+            "type": "string"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "stream_id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64,
+                  "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                },
+                "ts_ms": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "wall_ms": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "type": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$"
+                },
+                "confidence": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "actors": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "track_id": {
+                        "type": "string"
+                      },
+                      "bbox": {
+                        "type": "object",
+                        "properties": {
+                          "x": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1
+                          },
+                          "y": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1
+                          },
+                          "w": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1
+                          },
+                          "h": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1
+                          }
+                        },
+                        "required": [
+                          "x",
+                          "y",
+                          "w",
+                          "h"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "confidence": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      }
+                    },
+                    "required": [
+                      "label"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "default": []
+                },
+                "attrs": {
+                  "type": "object",
+                  "additionalProperties": {},
+                  "default": {}
+                },
+                "summary": {
+                  "type": "string",
+                  "maxLength": 500
+                },
+                "frame_ref": {
+                  "type": "object",
+                  "properties": {
+                    "stream_id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                    },
+                    "ts_ms": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "stream_id",
+                    "ts_ms"
+                  ],
+                  "additionalProperties": false
+                },
+                "scenario": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "stream_id",
+                "ts_ms",
+                "wall_ms",
+                "type",
+                "confidence",
+                "summary",
+                "scenario"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "summaries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "stream_id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64,
+                  "pattern": "^[a-z0-9][a-z0-9_-]*$"
+                },
+                "minute_start_ms": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "wall_ms": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "text": {
+                  "type": "string",
+                  "maxLength": 2000
+                },
+                "event_count": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "stream_id",
+                "minute_start_ms",
+                "wall_ms",
+                "text",
+                "event_count"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "type",
+          "request_id",
+          "events",
+          "summaries",
+          "truncated"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "error"
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "bad_request",
+              "unauthorized",
+              "quota",
+              "not_found",
+              "upstream",
+              "internal"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "request_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "code",
+          "message"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "SessionId": {
+    "type": "string",
+    "format": "uuid",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "SessionInfo": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "scenario": {
+        "type": "string"
+      },
+      "stream_ids": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+        }
+      },
+      "created_wall_ms": {
+        "type": "integer"
+      },
+      "state": {
+        "type": "string",
+        "enum": [
+          "open",
+          "closed"
+        ]
+      }
+    },
+    "required": [
+      "id",
+      "scenario",
+      "stream_ids",
+      "created_wall_ms",
+      "state"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "SessionStart": {
+    "type": "object",
+    "properties": {
+      "type": {
+        "type": "string",
+        "const": "session.start"
+      },
+      "scenario": {
+        "type": "string"
+      },
+      "stream_ids": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+        },
+        "minItems": 1,
+        "maxItems": 16
+      },
+      "locale": {
+        "type": "string",
+        "default": "en-US"
+      }
+    },
+    "required": [
+      "type",
+      "scenario",
+      "stream_ids"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "SessionStarted": {
+    "type": "object",
+    "properties": {
+      "type": {
+        "type": "string",
+        "const": "session.started"
+      },
+      "session_id": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "scenario": {
+        "type": "string"
+      },
+      "streams": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[a-z0-9][a-z0-9_-]*$"
+            },
+            "name": {
+              "type": "string",
+              "maxLength": 100
+            },
+            "uri": {
+              "type": "string",
+              "maxLength": 2048
+            },
+            "state": {
+              "type": "string",
+              "enum": [
+                "starting",
+                "live",
+                "stalled",
+                "stopped",
+                "error"
+              ]
+            },
+            "fps": {
+              "type": "number",
+              "minimum": 0
+            },
+            "last_frame_wall_ms": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "uri",
+            "state"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "server_wall_ms": {
+        "type": "integer"
+      }
+    },
+    "required": [
+      "type",
+      "session_id",
+      "scenario",
+      "streams",
+      "server_wall_ms"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "Stop": {
+    "type": "object",
+    "properties": {
+      "type": {
+        "type": "string",
+        "const": "control.stop"
+      }
+    },
+    "required": [
+      "type"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "StreamId": {
+    "type": "string",
+    "minLength": 1,
+    "maxLength": 64,
+    "pattern": "^[a-z0-9][a-z0-9_-]*$",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "StreamInfo": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64,
+        "pattern": "^[a-z0-9][a-z0-9_-]*$"
+      },
+      "name": {
+        "type": "string",
+        "maxLength": 100
+      },
+      "uri": {
+        "type": "string",
+        "maxLength": 2048
+      },
+      "state": {
+        "type": "string",
+        "enum": [
+          "starting",
+          "live",
+          "stalled",
+          "stopped",
+          "error"
+        ]
+      },
+      "fps": {
+        "type": "number",
+        "minimum": 0
+      },
+      "last_frame_wall_ms": {
+        "type": "integer"
+      }
+    },
+    "required": [
+      "id",
+      "name",
+      "uri",
+      "state"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "StreamState": {
+    "type": "string",
+    "enum": [
+      "starting",
+      "live",
+      "stalled",
+      "stopped",
+      "error"
+    ],
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "StreamStatus": {
+    "type": "object",
+    "properties": {
+      "type": {
+        "type": "string",
+        "const": "stream.status"
+      },
+      "stream": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[a-z0-9][a-z0-9_-]*$"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "uri": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "starting",
+              "live",
+              "stalled",
+              "stopped",
+              "error"
+            ]
+          },
+          "fps": {
+            "type": "number",
+            "minimum": 0
+          },
+          "last_frame_wall_ms": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "uri",
+          "state"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "required": [
+      "type",
+      "stream"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "SummaryMessage": {
+    "type": "object",
+    "properties": {
+      "type": {
+        "type": "string",
+        "const": "summary"
+      },
+      "summary": {
+        "type": "object",
+        "properties": {
+          "stream_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[a-z0-9][a-z0-9_-]*$"
+          },
+          "minute_start_ms": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "wall_ms": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "event_count": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "stream_id",
+          "minute_start_ms",
+          "wall_ms",
+          "text",
+          "event_count"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "required": [
+      "type",
+      "summary"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "TextMessage": {
+    "type": "object",
+    "properties": {
+      "type": {
+        "type": "string",
+        "const": "text.message"
+      },
+      "text": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 4000
+      }
+    },
+    "required": [
+      "type",
+      "text"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "TranscriptFinal": {
+    "type": "object",
+    "properties": {
+      "type": {
+        "type": "string",
+        "const": "transcript.final"
+      },
+      "text": {
+        "type": "string"
+      },
+      "ts_ms": {
+        "type": "integer"
+      },
+      "utterance_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "type",
+      "text",
+      "ts_ms",
+      "utterance_id"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  },
+  "TranscriptPartial": {
+    "type": "object",
+    "properties": {
+      "type": {
+        "type": "string",
+        "const": "transcript.partial"
+      },
+      "text": {
+        "type": "string"
+      },
+      "ts_ms": {
+        "type": "integer"
+      }
+    },
+    "required": [
+      "type",
+      "text",
+      "ts_ms"
+    ],
+    "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+}

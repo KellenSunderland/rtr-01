@@ -1,0 +1,20 @@
+{
+  "name": "@argus/protocol",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    "./schema.json": "./schema.json"
+  },
+  "files": ["dist", "schema.json"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "lint": "eslint .",
+    "gen:schema": "tsx scripts/gen-schema.ts"
+  },
+  "dependencies": { "zod": "^3.24.1" },
+  "devDependencies": { "tsx": "^4.19.2", "vitest": "^2.1.8", "zod-to-json-schema": "^3.24.1", "@types/node": "^22.10.2" }
+}

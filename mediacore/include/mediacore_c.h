@@ -249,6 +249,11 @@ typedef struct mc_jitter_stats {
 MC_API mc_status mc_jitter_buffer_stats(mc_jitter_buffer* jb, mc_jitter_stats* out);
 MC_API void mc_jitter_buffer_reset(mc_jitter_buffer* jb);
 
+/* ------------------------------------------------------------ capabilities */
+/* Extra (not in the original contract): 1 if built with OpenCV (video files, RTSP, devices,
+ * OpenCV codecs), 0 for the dependency-free build (stb codecs, "dir:<path>[@fps]" only). */
+MC_API int32_t mc_has_opencv(void);
+
 /* ------------------------------------------------------------ clock */
 MC_API int64_t mc_now_monotonic_ns(void);
 MC_API int64_t mc_now_wall_ns(void);

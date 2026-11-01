@@ -1,0 +1,123 @@
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import type { ApiClient } from "./lib/api";
+import { SessionClock } from "./lib/clock";
+import { AudioPlayer } from "./lib/audio/player";
+import { Mic } from "./lib/audio/mic";
+import { initialSessionState, sessionReducer } from "./lib/sessionState";
+import { ArgusSocket, type SocketStatus } from "./lib/ws";
+import { WINDOW_MS } from "./lib/timeline";
+
+export function useSession(api: ApiClient) {
+  const [state, dispatch] = useReducer(sessionReducer, initialSessionState);
+  const [status, setStatus] = useState<SocketStatus>("idle");
+  const [error, setError] = useState<string | null>(null);
+  const [talking, setTalking] = useState(false);
+  const clock = useMemo(() => new SessionClock(), []);
+  const sock = useRef<ArgusSocket | null>(null);
+  const sessionId = useRef<string | null>(null);
+  const player = useRef<AudioPlayer | null>(null);
+  const mic = useRef<Mic | null>(null);
+  const seq = useRef(0);
+  const talkingRef = useRef(false);
+  const reqN = useRef(0);
+
+  const stop = useCallback(async () => {
+    sock.current?.send({ type: "control.stop" });
+    sock.current?.close();
+    sock.current = null;
+    await mic.current?.stop();
+    await player.current?.dispose();
+    player.current = null;
+    clock.stop();
+    const id = sessionId.current;
+    sessionId.current = null;
+    if (id) await api.deleteSession(id).catch(() => undefined);
+    setTalking(false);
+  }, [api, clock]);
+
+  const start = useCallback(
+    async (scenario: string, streamIds: string[]) => {
+      setError(null);
+      await stop();
+      dispatch({ type: "reset" });
+      try {
+        const info = await api.createSession({ scenario, stream_ids: streamIds });
+        sessionId.current = info.id;
+        player.current = new AudioPlayer();
+        mic.current = new Mic({
+          onChunk: (pcm16_b64) => {
+            sock.current?.send({ type: "audio.chunk", seq: seq.current++, ts_ms: clock.ms(), sample_rate: 16000, pcm16_b64 });
+          },
+        });
+        const s = new ArgusSocket({ url: () => api.wsUrl(info.id), scenario, streamIds });
+        sock.current = s;
+        s.on("status", setStatus);
+        s.on("message", (msg) => {
+          dispatch({ type: "server", msg });
+          switch (msg.type) {
+            case "session.started": {
+              clock.start();
+              const now = clock.ms();
+              s.send({
+                type: "history.query",
+                request_id: `seed-${++reqN.current}`,
+                since_ms: Math.max(0, now - WINDOW_MS),
+                until_ms: now + 1000,
+                limit: 200,
+              });
+              break;
+            }
+            case "assistant.audio":
+              player.current?.enqueue(msg);
+              break;
+            case "assistant.cancelled":
+              player.current?.cancel(msg.utterance_id);
+              break;
+            case "transcript.partial":
+              // Auto barge-in: the user started talking while the assistant was audible.
+              if (player.current?.isPlaying) player.current.flush();
+              break;
+          }
+        });
+        s.connect();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : String(e));
+        sessionId.current = null;
+      }
+    },
+    [api, clock, stop],
+  );
+
+  useEffect(() => () => void stop(), [stop]);
+
+  const sendText = useCallback((text: string) => {
+    const t = text.trim();
+    if (!t) return;
+    if (sock.current?.send({ type: "text.message", text: t })) {
+      dispatch({ type: "local.user_text", text: t, key: `local:${Date.now()}:${Math.random()}` });
+    }
+  }, []);
+  const bargeIn = useCallback(() => {
+    player.current?.flush();
+    sock.current?.send({ type: "control.barge_in" });
+  }, []);
+  const pttStart = useCallback(async () => {
+    talkingRef.current = true;
+    setTalking(true);
+    try {
+      await mic.current?.start();
+      if (!talkingRef.current) await mic.current?.stop(); // released while permission prompt was open
+    } catch (e) {
+      talkingRef.current = false;
+      setTalking(false);
+      setError(`Microphone: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }, []);
+  const pttStop = useCallback(async () => {
+    talkingRef.current = false;
+    setTalking(false);
+    await mic.current?.stop();
+  }, []);
+
+  return { state, status, error, talking, clock, start, stop, sendText, bargeIn, pttStart, pttStop };
+}

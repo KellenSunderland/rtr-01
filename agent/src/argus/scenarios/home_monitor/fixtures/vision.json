@@ -1,0 +1,54 @@
+{
+ "timeline": [
+  {
+   "stream_id": "door1",
+   "from_ms": 2000,
+   "to_ms": 2500,
+   "event_type": "person.at_door",
+   "confidence": 0.9,
+   "summary": "A person stands at the front door.",
+   "attrs": {
+    "known": false
+   }
+  },
+  {
+   "stream_id": "door1",
+   "from_ms": 6000,
+   "to_ms": 6500,
+   "event_type": "person.entered",
+   "confidence": 0.95,
+   "summary": "The person enters the house.",
+   "attrs": {}
+  },
+  {
+   "stream_id": "kitchen1",
+   "from_ms": 10000,
+   "to_ms": 10500,
+   "event_type": "dog.eating",
+   "confidence": 0.9,
+   "summary": "A brown dog eats from a bowl in the kitchen.",
+   "attrs": {
+    "bowl_location": "kitchen",
+    "secret": "drop me"
+   }
+  },
+  {
+   "stream_id": "kitchen1",
+   "from_ms": 40000,
+   "to_ms": 40500,
+   "event_type": "dog.sleeping",
+   "confidence": 0.8,
+   "summary": "The dog is asleep on a rug.",
+   "attrs": {}
+  },
+  {
+   "stream_id": "door1",
+   "from_ms": 70000,
+   "to_ms": 70500,
+   "event_type": "package.delivered",
+   "confidence": 0.85,
+   "summary": "A package is left at the door.",
+   "attrs": {}
+  }
+ ]
+}

@@ -1,0 +1,16 @@
+{
+ "frame_step_ms": 500,
+ "duration_ms": 75000,
+ "streams": [
+  "door1",
+  "kitchen1"
+ ],
+ "asr_utterances": [
+  "what happened in the last minute"
+ ],
+ "script": [
+  "When did the dog last eat?",
+  "What happened in the last 2 minutes?",
+  "What do you see right now?"
+ ]
+}

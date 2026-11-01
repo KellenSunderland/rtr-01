@@ -1,0 +1,51 @@
+import type { SceneEvent } from "@argus/protocol";
+
+export interface Scoreboard {
+  /** Points per side/team label (normalized lower-case; "unknown" if the event names none). */
+  scores: Record<string, number>;
+  rallies: number;
+  rallyActive: boolean;
+  lastPointTs?: number;
+  lastWinner?: string;
+}
+
+export const emptyScoreboard: Scoreboard = { scores: {}, rallies: 0, rallyActive: false };
+
+export function winnerOf(e: Pick<SceneEvent, "attrs">): string {
+  const a = e.attrs;
+  for (const k of ["team", "winner", "side", "player"]) {
+    const v = a[k];
+    if (typeof v === "string" && v.trim()) return v.trim().toLowerCase();
+    if (typeof v === "number") return String(v);
+  }
+  return "unknown";
+}
+
+/** Fold one event. Pure; unrelated event types are ignored. */
+export function applyScoreEvent(s: Scoreboard, e: SceneEvent): Scoreboard {
+  if (e.type === "rally.start") return { ...s, rallies: s.rallies + 1, rallyActive: true };
+  if (e.type === "point.won") {
+    const w = winnerOf(e);
+    return { ...s, scores: { ...s.scores, [w]: (s.scores[w] ?? 0) + 1 }, rallyActive: false, lastPointTs: e.ts_ms, lastWinner: w };
+  }
+  return s;
+}
+
+/** Reduce events in ts order, de-duplicating by id (history seeding + live may overlap). */
+export function reduceScoreboard(events: readonly SceneEvent[]): Scoreboard {
+  const seen = new Set<string>();
+  return [...events]
+    .sort((a, b) => a.ts_ms - b.ts_ms)
+    .reduce((s, e) => {
+      if (seen.has(e.id)) return s;
+      seen.add(e.id);
+      return applyScoreEvent(s, e);
+    }, emptyScoreboard);
+}
+
+/** attrs of the most recent `state.snapshot` event, if any. */
+export function latestSnapshot(events: readonly SceneEvent[]): { ts_ms: number; state: Record<string, unknown> } | null {
+  let best: SceneEvent | null = null;
+  for (const e of events) if (e.type === "state.snapshot" && (!best || e.ts_ms >= best.ts_ms)) best = e;
+  return best ? { ts_ms: best.ts_ms, state: best.attrs } : null;
+}

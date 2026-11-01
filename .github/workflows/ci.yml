@@ -1,0 +1,99 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mediacore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install OpenCV + CMake
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libopencv-dev cmake ninja-build
+      - name: Configure
+        run: cmake -S mediacore -B mediacore/build -G Ninja -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build mediacore/build
+      - name: Test
+        run: ctest --test-dir mediacore/build --output-on-failure
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mediacore-build
+          path: |
+            mediacore/build/libmediacore*
+            mediacore/include
+
+  gateway:
+    runs-on: ubuntu-latest
+    needs: mediacore
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: gateway/go.mod
+          cache-dependency-path: gateway/go.sum
+      - name: Vet + test (fake media)
+        working-directory: gateway
+        run: go vet ./... && go test ./...
+      - name: Lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          working-directory: gateway
+      - name: Build with mediacore (cgo)
+        run: |
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends libopencv-dev cmake ninja-build
+          cmake -S mediacore -B mediacore/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DMEDIACORE_BUILD_TESTS=OFF
+          cmake --build mediacore/build
+          cd gateway && go build -tags mediacore ./...
+
+  agent:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: agent/uv.lock
+      - name: Sync
+        working-directory: agent
+        run: uv sync --all-extras --dev
+      - name: Lint + format
+        working-directory: agent
+        run: uv run ruff check . && uv run ruff format --check .
+      - name: Type check
+        working-directory: agent
+        run: uv run ty check
+      - name: Test
+        working-directory: agent
+        run: uv run pytest -q
+
+  console:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: console/pnpm-lock.yaml
+      - name: Install
+        working-directory: console
+        run: pnpm install --frozen-lockfile
+      - name: Build
+        working-directory: console
+        run: pnpm -r build
+      - name: Lint
+        working-directory: console
+        run: pnpm -r lint
+      - name: Test
+        working-directory: console
+        run: pnpm -r test

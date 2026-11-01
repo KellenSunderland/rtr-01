@@ -1,0 +1,6 @@
+Checks: >
+  -*,modernize-*,bugprone-*,cert-*,performance-*,
+  -modernize-use-trailing-return-type,-modernize-use-nodiscard,
+  -bugprone-easily-swappable-parameters,-cert-err58-cpp
+WarningsAsErrors: ''
+HeaderFilterRegex: 'src/.*'

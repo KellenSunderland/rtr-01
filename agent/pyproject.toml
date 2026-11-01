@@ -1,0 +1,47 @@
+[project]
+name = "argus-agent"
+version = "0.1.0"
+description = "Argus agent: perception, memory and conversation service"
+requires-python = ">=3.13"
+dependencies = [
+  "pydantic>=2.7",
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "websockets>=13",
+  "httpx>=0.27",
+  "pyyaml>=6",
+  "sqlite-vec>=0.1.6",
+  "numpy>=2",
+  "typer>=0.12",
+]
+
+[project.scripts]
+argus = "argus.cli:app"
+
+[dependency-groups]
+dev = ["pytest>=8", "pytest-asyncio>=0.24", "ruff>=0.6", "ty>=0.0.1a1"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/argus"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py313"
+extend-exclude = ["src/argus/providers/base.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC"]
+ignore = ["B008"]
+
+[tool.ty.src]
+exclude = ["tests"]

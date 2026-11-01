@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["vite/client", "node", "@testing-library/jest-dom"],
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": { "@argus/protocol": ["../../packages/protocol/src/index.ts"] }
+  },
+  "include": ["src", "mock", "vite.config.ts"]
+}
